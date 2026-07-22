@@ -141,3 +141,19 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+# Python
+__pycache__/
+*.py[cod]
+*.env
+.env
+venv/
+*.csv
+*.json
+
+# Next.js
+webapp/.next/
+webapp/node_modules/
+webapp/.env.local
+
+# General
+.DS_Store
