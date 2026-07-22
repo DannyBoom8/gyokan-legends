@@ -148,7 +148,6 @@ __pycache__/
 .env
 venv/
 *.csv
-*.json
 
 # Next.js
 webapp/.next/
