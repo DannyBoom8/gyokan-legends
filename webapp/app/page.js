@@ -1,65 +1,127 @@
-import Image from "next/image";
+'use client'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '../lib/supabase'
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+export default function LandingPage() {
+  const [tab, setTab] = useState('login')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [checking, setChecking] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.push('/dashboard')
+      else setChecking(false)
+    })
+  }, [])
+
+  const toEmail = (u) => `${u.toLowerCase().trim()}@gyokan.gg`
+
+  const handleLogin = async () => {
+    if (!username.trim() || !password) return setError('Fill in all fields')
+    setLoading(true)
+    setError('')
+    const { error } = await supabase.auth.signInWithPassword({
+      email: toEmail(username),
+      password,
+    })
+    if (error) { setError('Invalid username or password'); setLoading(false) }
+    else router.push('/dashboard')
+  }
+
+  const handleSignup = async () => {
+    if (!username.trim() || !password) return setError('Fill in all fields')
+    if (username.trim().length < 3) return setError('Username: minimum 3 characters')
+    if (password.length < 5) return setError('Password: minimum 5 characters')
+    if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) return setError('Username: letters, numbers and underscores only')
+    setLoading(true)
+    setError('')
+
+    const { data: existing } = await supabase
+      .from('users')
+      .select('username')
+      .eq('username', username.trim())
+      .maybeSingle()
+
+    if (existing) { setError('Username already taken'); setLoading(false); return }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: toEmail(username),
+      password,
+      options: { data: { username: username.trim() } },
+    })
+
+    if (error) { setError(error.message); setLoading(false); return }
+
+    if (data.user) {
+      await supabase.from('users').insert({ id: data.user.id, username: username.trim() })
+      await supabase.from('user_ranks').insert({ user_id: data.user.id })
+      router.push('/dashboard')
+    }
+  }
+
+  if (checking) return (
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <p className="text-amber-500 text-sm">Loading...</p>
     </div>
-  );
+  )
+
+  return (
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-10">
+          <h1 className="text-5xl font-bold text-amber-500 tracking-tight">GYOKAN</h1>
+          <p className="text-zinc-500 text-xs tracking-[0.3em] uppercase mt-1">Legends</p>
+          <p className="text-zinc-600 text-xs mt-3">Rise. Battle. Become Legend.</p>
+        </div>
+
+        <div className="flex bg-zinc-900 rounded-2xl p-1 mb-6">
+          {['login', 'signup'].map(t => (
+            <button key={t} onClick={() => { setTab(t); setError('') }}
+              className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${tab === t ? 'bg-amber-500 text-black' : 'text-zinc-500'}`}>
+              {t === 'login' ? 'Login' : 'Sign Up'}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-4 text-sm outline-none border border-zinc-800 focus:border-amber-500 transition-colors placeholder:text-zinc-600"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (tab === 'login' ? handleLogin() : handleSignup())}
+            className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-4 text-sm outline-none border border-zinc-800 focus:border-amber-500 transition-colors placeholder:text-zinc-600"
+          />
+
+          {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+
+          <button
+            onClick={tab === 'login' ? handleLogin : handleSignup}
+            disabled={loading}
+            className="w-full bg-amber-500 text-black font-bold rounded-2xl py-4 text-sm transition-all active:scale-95 disabled:opacity-50 mt-1">
+            {loading ? 'Please wait...' : tab === 'login' ? 'Enter the Arena' : 'Join Gyokan Legends'}
+          </button>
+        </div>
+
+        {tab === 'signup' && (
+          <p className="text-zinc-700 text-xs text-center mt-4">
+            Username min 3 chars · Password min 5 chars
+          </p>
+        )}
+        <p className="text-zinc-800 text-xs text-center mt-10">A Gyokan Product</p>
+      </div>
+    </div>
+  )
 }
