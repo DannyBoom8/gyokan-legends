@@ -35,6 +35,14 @@ export default function BottomNav({ active }) {
         <path d="M19 21l2-2"/>
       </svg>
     )},
+    { id: 'games', label: 'Games', path: '/games', icon: (a) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="11" rx="5"/>
+        <path d="M7 11v3M5.5 12.5h3" stroke={a ? 'black' : 'currentColor'}/>
+        <circle cx="15.5" cy="12" r="0.75" fill={a ? 'black' : 'currentColor'} stroke="none"/>
+        <circle cx="17.5" cy="14" r="0.75" fill={a ? 'black' : 'currentColor'} stroke="none"/>
+      </svg>
+    )},
     { id: 'more', label: 'More', path: null, icon: () => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="5" cy="12" r="2"/>

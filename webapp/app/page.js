@@ -124,6 +124,15 @@ export default function LandingPage() {
             Username min 3 chars · Password min 5 chars
           </p>
         )}
+        <button onClick={() => router.push('/games')}
+          className="press enter w-full mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3.5 flex items-center justify-between text-left"
+          style={{ '--i': 4 }}>
+          <span>
+            <span className="block text-white text-sm font-medium">Play free anime games</span>
+            <span className="block text-zinc-500 text-xs mt-0.5">Hangman, Imposter, Charades and more. No account needed.</span>
+          </span>
+          <span className="text-amber-500 text-lg" aria-hidden>→</span>
+        </button>
         <p className="text-zinc-800 text-xs text-center mt-10">A Gyokan Product</p>
       </div>
     </div>

@@ -4,8 +4,8 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 
 const description =
-  "Draft 10 anime legends with 100M gold. Every Thursday they battle, and every win climbs you from Rookie to Legendary. Free to play.";
-const shareTitle = "Gyokan Legends — Fantasy anime battles every Thursday";
+  "Free anime games. Draft legends for weekly battles, or play Hangu-Manu, Anime Imposter, Anime Charades and Category Tic Tac Toe with friends. Nothing to download.";
+const shareTitle = "Gyokan Legends — Anime games to play solo or with friends";
 
 export const metadata = {
   metadataBase: new URL("https://gyokanlegends.utilox.com"),
@@ -16,14 +16,14 @@ export const metadata = {
     description,
     url: "/",
     siteName: "Gyokan Legends",
-    images: [{ url: "/og.png?v=2", width: 1200, height: 630, alt: "Gyokan Legends: three fighter cards with ratings and power types beside the Gyokan Legends logo" }],
+    images: [{ url: "/og.png?v=3", width: 1200, height: 630, alt: "Gyokan Legends logo above five game tiles: Legends, Hangu-Manu, Imposter, Charades and Tic Tac Toe" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: shareTitle,
     description,
-    images: ["/og.png?v=2"],
+    images: ["/og.png?v=3"],
   },
 };
 
