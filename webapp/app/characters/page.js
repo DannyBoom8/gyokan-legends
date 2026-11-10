@@ -3,17 +3,9 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import BottomNav from '../../components/BottomNav'
+import { BUDGET, POWER_TYPES, POWER_BADGES, POWER_COLORS, formatGold } from '../../lib/game'
 
-const POWER_TYPES = ['All', 'Physical', 'Elemental', 'Spiritual', 'Tactical', 'Cursed', 'Mythic']
-
-const POWER_COLORS = {
-  Physical: 'bg-orange-500/20 text-orange-400',
-  Elemental: 'bg-blue-500/20 text-blue-400',
-  Spiritual: 'bg-purple-500/20 text-purple-400',
-  Tactical: 'bg-yellow-500/20 text-yellow-400',
-  Cursed: 'bg-red-500/20 text-red-400',
-  Mythic: 'bg-pink-500/20 text-pink-400',
-}
+const FILTERS = ['All', ...POWER_TYPES]
 
 function CharactersContent() {
   const [characters, setCharacters] = useState([])
@@ -25,6 +17,7 @@ function CharactersContent() {
   const [hasMore, setHasMore] = useState(true)
   const [adding, setAdding] = useState(null)
   const [partyCharIds, setPartyCharIds] = useState([])
+  const [goldLeft, setGoldLeft] = useState(BUDGET)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -66,9 +59,10 @@ function CharactersContent() {
       if (partyId) {
         const { data: existingSlots } = await supabase
           .from('party_slots')
-          .select('character_id')
+          .select('character_id, characters(gold_cost)')
           .eq('party_id', parseInt(partyId))
         setPartyCharIds((existingSlots || []).map(s => s.character_id))
+        setGoldLeft(BUDGET - (existingSlots || []).reduce((sum, s) => sum + (s.characters?.gold_cost || 0), 0))
       }
 
       await fetchCharacters(true)
@@ -89,7 +83,7 @@ function CharactersContent() {
   }
 
   const addToParty = async (character) => {
-    if (!isSelecting) return
+    if (!isSelecting || character.gold_cost > goldLeft) return
     setAdding(character.character_id)
 
     const { error } = await supabase.from('party_slots').insert({
@@ -110,7 +104,6 @@ function CharactersContent() {
   }
 
   const formatFavs = (f) => f >= 1000 ? `${(f / 1000).toFixed(1)}k` : `${f}`
-  const formatGold = (g) => g ? `${(g / 1000000).toFixed(0)}M` : '—'
 
   return (
     <div className="min-h-screen bg-black text-white pb-28">
@@ -122,7 +115,7 @@ function CharactersContent() {
           <h1 className="text-2xl font-bold">Characters</h1>
         </div>
         {isSelecting && (
-          <p className="text-amber-500 text-sm">Selecting {slotType} — slot {slotPosition}</p>
+          <p className="text-amber-500 text-sm">Selecting {slotType} — slot {slotPosition} · {formatGold(goldLeft)} gold left</p>
         )}
       </div>
 
@@ -137,7 +130,7 @@ function CharactersContent() {
       </div>
 
       <div className="px-5 mb-4 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-        {POWER_TYPES.map(pt => (
+        {FILTERS.map(pt => (
           <button key={pt} onClick={() => setFilter(pt)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${filter === pt ? 'bg-amber-500 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
             {pt}
@@ -151,15 +144,15 @@ function CharactersContent() {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full sm:min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-zinc-800/80">
-                <th className="text-left text-zinc-500 text-xs font-medium px-5 py-3 w-[200px]">Character</th>
-                <th className="text-left text-zinc-500 text-xs font-medium px-3 py-3">Type</th>
+                <th className="text-left text-zinc-500 text-xs font-medium pl-5 pr-2 py-3">Character</th>
+                <th className="hidden sm:table-cell text-left text-zinc-500 text-xs font-medium px-3 py-3">Type</th>
                 <th className="text-right text-zinc-500 text-xs font-medium px-3 py-3">OVR</th>
                 <th className="text-right text-zinc-500 text-xs font-medium px-3 py-3">Cost</th>
-                <th className="text-right text-zinc-500 text-xs font-medium px-3 py-3">Favs</th>
-                {isSelecting && <th className="px-3 py-3 w-16"></th>}
+                <th className="hidden sm:table-cell text-right text-zinc-500 text-xs font-medium px-3 py-3">Favs</th>
+                {isSelecting && <th className="pl-2 pr-5 py-3 w-16"></th>}
               </tr>
             </thead>
             <tbody>
@@ -167,19 +160,20 @@ function CharactersContent() {
                 const alreadyIn = partyCharIds.includes(char.character_id)
                 return (
                   <tr key={char.character_id} className={`border-b border-zinc-900 ${alreadyIn ? 'opacity-30' : 'hover:bg-zinc-900/40'}`}>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
+                    <td className="pl-5 pr-2 py-3">
+                      <button onClick={() => router.push(`/characters/${char.character_id}`)} className="flex items-center gap-3 text-left">
                         <img src={char.image_url} alt={char.name}
                           className="w-10 h-10 rounded-xl object-cover flex-shrink-0 bg-zinc-800" />
                         <div className="min-w-0">
                           <p className="text-white text-sm font-medium truncate max-w-[110px]">{char.name}</p>
                           <p className="text-zinc-600 text-xs truncate max-w-[110px]">{char.anime_title}</p>
+                          <p className={`sm:hidden text-xs ${POWER_COLORS[char.power_type] || 'text-zinc-600'}`}>{char.power_type || '—'}</p>
                         </div>
-                      </div>
+                      </button>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="hidden sm:table-cell px-3 py-3">
                       {char.power_type ? (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${POWER_COLORS[char.power_type] || 'bg-zinc-800 text-zinc-400'}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${POWER_BADGES[char.power_type] || 'bg-zinc-800 text-zinc-400'}`}>
                           {char.power_type}
                         </span>
                       ) : <span className="text-zinc-700 text-xs">—</span>}
@@ -190,12 +184,15 @@ function CharactersContent() {
                     <td className="px-3 py-3 text-right">
                       <span className="text-amber-400">{formatGold(char.gold_cost)}</span>
                     </td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="hidden sm:table-cell px-3 py-3 text-right">
                       <span className="text-zinc-400">{formatFavs(char.favourites)}</span>
                     </td>
                     {isSelecting && (
-                      <td className="px-3 py-3">
-                        {!alreadyIn && (
+                      <td className="pl-2 pr-5 py-3 text-right">
+                        {!alreadyIn && char.gold_cost > goldLeft && (
+                          <span className="text-zinc-600 text-xs whitespace-nowrap">Too pricey</span>
+                        )}
+                        {!alreadyIn && char.gold_cost <= goldLeft && (
                           <button
                             onClick={() => addToParty(char)}
                             disabled={adding === char.character_id}

@@ -3,29 +3,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import BottomNav from '../../components/BottomNav'
-
-const RANK_COLORS = {
-  Legendary: 'text-amber-400',
-  Sovereign: 'text-purple-400',
-  Warlord: 'text-red-400',
-  Veteran: 'text-blue-400',
-  Ronin: 'text-zinc-400',
-  Rookie: 'text-zinc-500',
-}
-
-const RANK_BG = {
-  Legendary: 'border-amber-500/30 bg-amber-500/5',
-  Sovereign: 'border-purple-500/30 bg-purple-500/5',
-  Warlord: 'border-red-500/30 bg-red-500/5',
-  Veteran: 'border-blue-500/30 bg-blue-500/5',
-  Ronin: 'border-zinc-600/30 bg-zinc-800/30',
-  Rookie: 'border-zinc-700/30 bg-zinc-900/50',
-}
+import { BUDGET, formatGold, formatPoints, nextBattle, nextRank, rankInfo } from '../../lib/game'
 
 export default function Dashboard() {
   const [user, setUser] = useState(null)
   const [rankData, setRankData] = useState(null)
-  const [partyCount, setPartyCount] = useState(0)
+  const [slots, setSlots] = useState([])
+  const [weekPoints, setWeekPoints] = useState(0)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -33,24 +17,28 @@ export default function Dashboard() {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
+      const uid = session.user.id
 
-      const [{ data: userData }, { data: rank }, { data: party }] = await Promise.all([
-        supabase.from('users').select('username').eq('id', session.user.id).single(),
-        supabase.from('user_ranks').select('*').eq('user_id', session.user.id).single(),
-        supabase.from('parties').select('id').eq('user_id', session.user.id).maybeSingle(),
+      const [{ data: userData }, { data: rank }, { data: party }, { data: gw }] = await Promise.all([
+        supabase.from('users').select('username').eq('id', uid).single(),
+        supabase.from('user_ranks').select('*').eq('user_id', uid).maybeSingle(),
+        supabase.from('parties').select('id').eq('user_id', uid).maybeSingle(),
+        supabase.from('gameweeks').select('gameweek_id').order('gameweek_id', { ascending: false }).limit(1).maybeSingle(),
       ])
 
       setUser(userData)
       setRankData(rank)
 
-      if (party) {
-        const { count } = await supabase
-          .from('party_slots')
-          .select('*', { count: 'exact', head: true })
-          .eq('party_id', party.id)
-        setPartyCount(count || 0)
-      }
-
+      const [slotRes, pointsRes] = await Promise.all([
+        party
+          ? supabase.from('party_slots').select('id, characters(gold_cost)').eq('party_id', party.id)
+          : { data: [] },
+        gw
+          ? supabase.from('fantasy_points').select('final_points').eq('user_id', uid).eq('gameweek_id', gw.gameweek_id)
+          : { data: [] },
+      ])
+      setSlots(slotRes.data || [])
+      setWeekPoints((pointsRes.data || []).reduce((sum, p) => sum + Number(p.final_points || 0), 0))
       setLoading(false)
     }
     load()
@@ -62,9 +50,16 @@ export default function Dashboard() {
     </div>
   )
 
-  const rank = rankData?.current_rank || 'Rookie'
-  const seasonPoints = rankData?.season_points || 0
+  const rank = rankInfo(rankData?.current_rank)
+  const seasonPoints = formatPoints(rankData?.season_points)
   const isLegend = rankData?.is_legend || false
+  const upcoming = nextRank(seasonPoints)
+  const progress = upcoming ? Math.min(100, ((seasonPoints - rank.min) / (upcoming.min - rank.min)) * 100) : 100
+  const partyCount = slots.length
+  const goldLeft = BUDGET - slots.reduce((sum, s) => sum + (s.characters?.gold_cost || 0), 0)
+  const battle = nextBattle()
+  const battleIsToday = battle.toDateString() === new Date().toDateString()
+  const daysToBattle = Math.max(1, Math.round((battle - new Date()) / 86400000))
 
   return (
     <div className="min-h-screen bg-black text-white pb-28">
@@ -81,25 +76,35 @@ export default function Dashboard() {
       </div>
 
       <div className="mx-5 mb-4">
-        <div className={`rounded-2xl border p-5 ${RANK_BG[rank]}`}>
+        <div className={`rounded-2xl border p-5 ${rank.bg}`}>
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Rank</p>
-              <p className={`text-2xl font-bold ${RANK_COLORS[rank]}`}>{rank}</p>
+              <p className={`text-2xl font-bold ${rank.color}`}>{rank.name}</p>
             </div>
             <div className="text-right">
               <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Season points</p>
-              <p className="text-2xl font-bold text-white">{seasonPoints}</p>
+              <p className="text-2xl font-bold text-white tabular-nums">{seasonPoints}</p>
             </div>
           </div>
+
+          <div className="mb-4">
+            <div className="h-1.5 rounded-full bg-black/40 overflow-hidden">
+              <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: `${progress}%` }} />
+            </div>
+            <p className="text-zinc-500 text-xs mt-2">
+              {upcoming ? `${formatPoints(upcoming.min - seasonPoints)} pts to ${upcoming.name}` : 'Top rank reached'}
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-black/30 rounded-xl p-3">
-              <p className="text-zinc-500 text-xs mb-1">This week</p>
-              <p className="text-white font-bold text-lg">0 pts</p>
+              <p className="text-zinc-500 text-xs mb-1">Last battle night</p>
+              <p className="text-white font-bold text-lg tabular-nums">{formatPoints(weekPoints)} pts</p>
             </div>
             <div className="bg-black/30 rounded-xl p-3">
-              <p className="text-zinc-500 text-xs mb-1">Gold</p>
-              <p className="text-amber-400 font-bold text-lg">100M</p>
+              <p className="text-zinc-500 text-xs mb-1">Gold left</p>
+              <p className={`font-bold text-lg tabular-nums ${goldLeft < 0 ? 'text-red-400' : 'text-amber-400'}`}>{formatGold(goldLeft)}</p>
             </div>
           </div>
         </div>
@@ -107,7 +112,7 @@ export default function Dashboard() {
 
       <div className="px-5 flex flex-col gap-3">
         <button onClick={() => router.push('/party')}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left active:scale-95 transition-all">
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left active:scale-[0.98] transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">My Party</p>
@@ -122,33 +127,40 @@ export default function Dashboard() {
             <p className="text-zinc-600 text-xs mt-2">Pick 10 characters and start earning points</p>
           )}
           {partyCount > 0 && partyCount < 10 && (
-            <p className="text-amber-500/70 text-xs mt-2">{10 - partyCount} slots still empty</p>
+            <p className="text-amber-500/70 text-xs mt-2">{10 - partyCount} slots still empty — empty slots score nothing</p>
           )}
         </button>
 
         <button onClick={() => router.push('/battles')}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left active:scale-95 transition-all">
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left active:scale-[0.98] transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Battles</p>
-              <p className="text-white font-semibold">This week's results</p>
+              <p className="text-white font-semibold">
+                Next battle {battleIsToday ? 'today' : `in ${daysToBattle} day${daysToBattle === 1 ? '' : 's'}`}
+              </p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center text-2xl">🔥</div>
           </div>
-          <p className="text-zinc-600 text-xs mt-2">Battles happen every Thursday</p>
+          <p className="text-zinc-600 text-xs mt-2">
+            {battle.toLocaleString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' })} · see last results
+          </p>
         </button>
 
-        <button onClick={() => router.push('/points')}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left active:scale-95 transition-all">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Points</p>
-              <p className="text-white font-semibold">{seasonPoints} total this season</p>
-            </div>
-            <div className="w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center text-2xl">📊</div>
-          </div>
-          <p className="text-zinc-600 text-xs mt-2">Tap to see full breakdown</p>
-        </button>
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => router.push('/leaderboard')}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left active:scale-[0.98] transition-all">
+            <div className="text-2xl mb-2">🏆</div>
+            <p className="text-white font-semibold text-sm">Leaderboard</p>
+            <p className="text-zinc-600 text-xs mt-0.5">See who leads</p>
+          </button>
+          <button onClick={() => router.push('/rules')}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left active:scale-[0.98] transition-all">
+            <div className="text-2xl mb-2">📜</div>
+            <p className="text-white font-semibold text-sm">How to play</p>
+            <p className="text-zinc-600 text-xs mt-0.5">Slots, types, ranks</p>
+          </button>
+        </div>
       </div>
 
       <BottomNav active="dashboard" />

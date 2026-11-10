@@ -45,9 +45,10 @@ export default function BottomNav({ active }) {
   ]
 
   const moreItems = [
-    { label: 'Points', emoji: '📊', path: '/points', coming: false },
-    { label: 'Settings', emoji: '⚙️', path: null, coming: true },
-    { label: 'Support', emoji: '💬', path: null, coming: true },
+    { id: 'characters', label: 'Characters', emoji: '🎴', path: '/characters' },
+    { id: 'points', label: 'Points', emoji: '📊', path: '/points' },
+    { id: 'leaderboard', label: 'Leaderboard', emoji: '🏆', path: '/leaderboard' },
+    { id: 'rules', label: 'How to play', emoji: '📜', path: '/rules' },
   ]
 
   return (
@@ -58,16 +59,12 @@ export default function BottomNav({ active }) {
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
               {moreItems.map(item => (
                 <button key={item.label}
-                  onClick={() => {
-                    if (item.path) { router.push(item.path); setShowMore(false) }
-                  }}
-                  disabled={item.coming}
-                  className="w-full flex items-center justify-between px-5 py-4 border-b border-zinc-800/60 active:bg-zinc-800 disabled:opacity-40">
+                  onClick={() => { router.push(item.path); setShowMore(false) }}
+                  className={`w-full flex items-center justify-between px-5 py-4 border-b border-zinc-800/60 active:bg-zinc-800 ${active === item.id ? 'bg-zinc-800/50' : ''}`}>
                   <div className="flex items-center gap-3">
                     <span className="text-lg">{item.emoji}</span>
                     <span className="text-white text-sm">{item.label}</span>
                   </div>
-                  {item.coming && <span className="text-zinc-600 text-xs">Coming soon</span>}
                 </button>
               ))}
               <button onClick={handleLogout}
@@ -83,7 +80,7 @@ export default function BottomNav({ active }) {
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-zinc-900 backdrop-blur-sm">
         <div className="flex items-center pb-safe">
           {tabs.map(tab => {
-            const isActive = active === tab.id || (tab.id === 'more' && showMore)
+            const isActive = active === tab.id || (tab.id === 'more' && (showMore || moreItems.some(m => m.id === active)))
             return (
               <button key={tab.id}
                 onClick={() => {

@@ -14,32 +14,15 @@ def load_characters(df):
     conn = get_connection()
     cursor = conn.cursor()
 
-    records = []
-    for _, row in df.iterrows():
-        records.append((
-            int(row["character_id"]),
-            row["name"],
-            row["image_url"] if pd.notna(row["image_url"]) else None,
-            row["anime_title"] if pd.notna(row["anime_title"]) else None,
-            row["role"] if pd.notna(row["role"]) else None,
-            int(row["favourites"]),
-            None,  # power_type
-            None,  # strength
-            None,  # speed
-            None,  # defence
-            None,  # technique
-            None,  # magic
-            None,  # iq
-            None,  # aura
-            None,  # overall
-            None,  # gold_cost
-            None,  # trait_1
-            None,  # trait_2
-            None,  # awakening_name
-            None,  # awakening_trigger
-            None,  # awakening_boost
-            False  # is_active
-        ))
+    columns = [
+        "character_id", "name", "image_url", "anime_title", "role", "favourites",
+        "power_type", "strength", "speed", "defence", "technique", "magic", "iq",
+        "aura", "overall", "gold_cost", "trait_1", "trait_2",
+        "awakening_name", "awakening_trigger", "awakening_boost", "is_active",
+    ]
+    # pandas gives NaN and numpy types; psycopg2 wants None and plain python values
+    clean = lambda v: None if pd.isna(v) else (v.item() if hasattr(v, "item") else v)
+    records = [tuple(clean(row[c]) for c in columns) for _, row in df.iterrows()]
 
     insert_query = """
         INSERT INTO characters (
@@ -53,7 +36,18 @@ def load_characters(df):
             image_url = EXCLUDED.image_url,
             anime_title = EXCLUDED.anime_title,
             role = EXCLUDED.role,
-            favourites = EXCLUDED.favourites
+            favourites = EXCLUDED.favourites,
+            power_type = EXCLUDED.power_type,
+            strength = EXCLUDED.strength,
+            speed = EXCLUDED.speed,
+            defence = EXCLUDED.defence,
+            technique = EXCLUDED.technique,
+            magic = EXCLUDED.magic,
+            iq = EXCLUDED.iq,
+            aura = EXCLUDED.aura,
+            overall = EXCLUDED.overall,
+            gold_cost = EXCLUDED.gold_cost,
+            is_active = EXCLUDED.is_active
     """
 
     chunk_size = 100

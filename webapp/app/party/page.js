@@ -3,14 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import BottomNav from '../../components/BottomNav'
-
-const SLOT_DEFS = [
-  { type: 'Champion', count: 2, points: 5, color: 'text-amber-400', border: 'border-amber-500/30 bg-amber-500/5', empty: 'border-amber-500/20' },
-  { type: 'Specialist', count: 3, points: 4, color: 'text-purple-400', border: 'border-purple-500/30 bg-purple-500/5', empty: 'border-purple-500/20' },
-  { type: 'Support', count: 2, points: 3, color: 'text-blue-400', border: 'border-blue-500/30 bg-blue-500/5', empty: 'border-blue-500/20' },
-  { type: 'Medic', count: 1, points: 3, color: 'text-green-400', border: 'border-green-500/30 bg-green-500/5', empty: 'border-green-500/20' },
-  { type: 'Sub', count: 2, points: 1, color: 'text-zinc-400', border: 'border-zinc-700/30 bg-zinc-800/30', empty: 'border-zinc-700/30' },
-]
+import { BUDGET, SLOT_DEFS, POWER_COLORS, formatGold } from '../../lib/game'
 
 export default function Party() {
   const [party, setParty] = useState(null)
@@ -60,16 +53,12 @@ export default function Party() {
   }
 
   const totalGoldSpent = slots.reduce((sum, s) => sum + (s.characters?.gold_cost || 0), 0)
-  const goldRemaining = 100000000 - totalGoldSpent
-  const formatGold = (g) => `${(g / 1000000).toFixed(0)}M`
+  const goldRemaining = BUDGET - totalGoldSpent
 
-  const POWER_COLORS = {
-    Physical: 'text-orange-400',
-    Elemental: 'text-blue-400',
-    Spiritual: 'text-purple-400',
-    Tactical: 'text-yellow-400',
-    Cursed: 'text-red-400',
-    Mythic: 'text-pink-400',
+  // positions are fixed per slot type, so reuse the first one nobody holds
+  const firstFreePosition = (def) => {
+    const taken = slots.filter(s => s.slot_type === def.type).map(s => s.slot_position)
+    return Array.from({ length: def.count }, (_, i) => i + 1).find(p => !taken.includes(p))
   }
 
   if (loading) return (
@@ -104,6 +93,12 @@ export default function Party() {
         </div>
       </div>
 
+      {goldRemaining < 0 && (
+        <p className="mx-5 -mt-2 mb-5 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+          Over budget: this party won&apos;t score on battle night. Swap someone for a cheaper pick.
+        </p>
+      )}
+
       <div className="px-5 flex flex-col gap-5">
         {SLOT_DEFS.map(def => {
           const filled = slots.filter(s => s.slot_type === def.type)
@@ -125,17 +120,20 @@ export default function Party() {
                   const slot = filled[i]
                   return slot ? (
                     <div key={slot.id} className={`rounded-2xl border p-3 flex items-center gap-3 ${def.border}`}>
+                      <button onClick={() => router.push(`/characters/${slot.character_id}`)}
+                        className="flex-1 min-w-0 flex items-center gap-3 text-left">
                       <img src={slot.characters?.image_url} alt={slot.characters?.name}
-                        className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                        className="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-zinc-800" />
                       <div className="flex-1 min-w-0">
                         <p className="text-white text-sm font-medium truncate">{slot.characters?.name}</p>
                         <p className="text-zinc-500 text-xs truncate">{slot.characters?.anime_title}</p>
                         <p className={`text-xs ${POWER_COLORS[slot.characters?.power_type] || 'text-zinc-600'}`}>
-                          {slot.characters?.power_type || '—'}
+                          {slot.characters?.power_type || '—'} · OVR {slot.characters?.overall ?? '—'}
                         </p>
                       </div>
+                      </button>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-amber-400 text-xs">{slot.characters?.gold_cost ? formatGold(slot.characters.gold_cost) : '—'}</p>
+                        <p className="text-amber-400 text-xs">{formatGold(slot.characters?.gold_cost)}</p>
                         <button
                           onClick={() => removeCharacter(slot.id)}
                           disabled={removing === slot.id}
@@ -147,7 +145,7 @@ export default function Party() {
                   ) : (
                     <button
                       key={`empty-${i}`}
-                      onClick={() => router.push(`/characters?slot=${def.type}&position=${i + 1}&party=${party?.id}`)}
+                      onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
                       className={`w-full rounded-2xl border border-dashed p-3 flex items-center gap-3 active:opacity-50 transition-all ${def.empty}`}>
                       <div className="w-12 h-12 rounded-xl bg-zinc-800/50 flex items-center justify-center text-zinc-600 text-xl flex-shrink-0">+</div>
                       <p className="text-zinc-600 text-sm">Add {def.type}</p>

@@ -1,0 +1,18 @@
+name: Thursday battles
+on:
+  schedule:
+    - cron: "0 19 * * 4"   # every Thursday 19:00 UTC
+  workflow_dispatch:        # "Run workflow" button for a manual battle night
+jobs:
+  battle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r pipeline/requirements.txt
+      - run: python pipeline/test_battle.py
+      - run: python pipeline/battle.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

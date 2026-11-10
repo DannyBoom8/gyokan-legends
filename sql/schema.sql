@@ -1,5 +1,8 @@
+-- Full schema for a fresh Supabase project, matching what the web app and pipeline use.
+-- Fresh project: run this file, then 002_leaderboard.sql. Existing database: run only 002_leaderboard.sql.
+
 CREATE TABLE characters (
-    character_id        INT PRIMARY KEY,
+    character_id        INT PRIMARY KEY,           -- AniList id
     name                TEXT NOT NULL,
     image_url           TEXT,
     anime_title         TEXT,
@@ -24,29 +27,29 @@ CREATE TABLE characters (
     created_at          TIMESTAMP DEFAULT now()
 );
 
+-- login is Supabase auth (username@gyokan.gg); this table holds the public profile
 CREATE TABLE users (
-    user_id             SERIAL PRIMARY KEY,
+    id                  UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     username            TEXT UNIQUE NOT NULL,
-    email               TEXT UNIQUE NOT NULL,
-    password_hash       TEXT NOT NULL,
     created_at          TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE parties (
-    party_id            SERIAL PRIMARY KEY,
-    user_id             INT REFERENCES users(user_id) UNIQUE,
+    id                  SERIAL PRIMARY KEY,
+    user_id             UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     created_at          TIMESTAMP DEFAULT now(),
     updated_at          TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE party_slots (
-    slot_id             SERIAL PRIMARY KEY,
-    party_id            INT REFERENCES parties(party_id),
+    id                  SERIAL PRIMARY KEY,
+    party_id            INT REFERENCES parties(id) ON DELETE CASCADE,
     character_id        INT REFERENCES characters(character_id),
-    slot_type           TEXT NOT NULL,
+    slot_type           TEXT NOT NULL,             -- Champion | Specialist | Support | Medic | Sub
     slot_position       SMALLINT NOT NULL,
     gameweek            INT,
-    UNIQUE (party_id, slot_type, slot_position, gameweek)
+    UNIQUE (party_id, character_id),
+    UNIQUE (party_id, slot_type, slot_position)
 );
 
 CREATE TABLE seasons (
@@ -84,7 +87,7 @@ CREATE TABLE results (
 
 CREATE TABLE fantasy_points (
     points_id               SERIAL PRIMARY KEY,
-    user_id                 INT REFERENCES users(user_id),
+    user_id                 UUID REFERENCES users(id) ON DELETE CASCADE,
     gameweek_id             INT REFERENCES gameweeks(gameweek_id),
     character_id            INT REFERENCES characters(character_id),
     slot_type               TEXT,
@@ -96,10 +99,39 @@ CREATE TABLE fantasy_points (
 
 CREATE TABLE user_ranks (
     rank_id             SERIAL PRIMARY KEY,
-    user_id             INT REFERENCES users(user_id) UNIQUE,
+    user_id             UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     current_rank        TEXT DEFAULT 'Rookie',
     season_points       NUMERIC DEFAULT 0,
     all_time_points     NUMERIC DEFAULT 0,
     is_legend           BOOLEAN DEFAULT FALSE,
     updated_at          TIMESTAMP DEFAULT now()
 );
+
+-- Row security: the browser uses the anon key, so every table needs it.
+-- The battle job connects with DATABASE_URL as the owner and bypasses these.
+ALTER TABLE characters      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE seasons         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gameweeks       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fixtures        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE results         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE parties         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE party_slots     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fantasy_points  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_ranks      ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public read" ON characters FOR SELECT USING (true);
+CREATE POLICY "public read" ON seasons    FOR SELECT USING (true);
+CREATE POLICY "public read" ON gameweeks  FOR SELECT USING (true);
+CREATE POLICY "public read" ON fixtures   FOR SELECT USING (true);
+CREATE POLICY "public read" ON results    FOR SELECT USING (true);
+CREATE POLICY "public read" ON users      FOR SELECT USING (true);  -- usernames only, for "username taken"
+
+CREATE POLICY "own profile"  ON users          FOR INSERT WITH CHECK (id = auth.uid());
+CREATE POLICY "own rank"     ON user_ranks     FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "own rank add" ON user_ranks     FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "own points"   ON fantasy_points FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "own party"    ON parties        FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY "own slots"    ON party_slots    FOR ALL
+    USING (party_id IN (SELECT id FROM parties WHERE user_id = auth.uid()))
+    WITH CHECK (party_id IN (SELECT id FROM parties WHERE user_id = auth.uid()));
