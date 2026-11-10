@@ -1,6 +1,7 @@
 """Run: python scripts/make_og.py public/og.png (needs Windows fonts).
 Share image for gyokanlegends.utilox.com, 1200x630: the Gyokan platform and its games.
 Drawn at 2x then downsampled. No studio character art."""
+import math
 import sys
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
@@ -40,16 +41,52 @@ centered("Anime games to play solo or with friends", 250 * S, font("segoeui.ttf"
 
 # game tiles
 games = [
-    ("🐉", "Legends", (245, 158, 11)),
-    ("🔤", "Hangu-Manu", (96, 165, 250)),
-    ("🥷", "Imposter", (248, 113, 113)),
-    ("🎭", "Charades", (192, 132, 252)),
-    ("⭕", "Tic Tac Toe", (74, 222, 128)),
+    ("star", "Legends", (245, 158, 11)),
+    ("letters", "Hangu-Manu", (96, 165, 250)),
+    ("mask", "Imposter", (248, 113, 113)),
+    ("faces", "Charades", (192, 132, 252)),
+    ("grid", "Tic Tac Toe", (74, 222, 128)),
 ]
 tw, th, gap, r = 176 * S, 176 * S, 22 * S, 36 * S
 x0 = (W - (len(games) * tw + (len(games) - 1) * gap)) // 2
 y0 = 330 * S
-emoji = ImageFont.truetype(F + "seguiemj.ttf", 76 * S)
+
+
+def draw_icon(td, kind, cx, cy, color):
+    """Line icons that echo the in-app set (1.5px stroke at 24px scales to ~6px here)."""
+    u = 3.6 * S  # one icon unit
+    w = int(2.6 * S)
+    c = color + (255,)
+    if kind == "star":
+        pts = []
+        for k in range(10):
+            ang = -math.pi / 2 + k * math.pi / 5
+            rad = 11 * u if k % 2 == 0 else 4.6 * u
+            pts.append((cx + rad * math.cos(ang), cy + rad * math.sin(ang)))
+        td.line(pts + [pts[0]], fill=c, width=w, joint="curve")
+    elif kind == "letters":
+        f = ImageFont.truetype(F + "seguibl.ttf", int(15 * u))
+        l, t, r_, b = f.getbbox("Aa")
+        td.text((cx - (r_ - l) / 2 - l, cy - (b - t) / 2 - t), "Aa", font=f, fill=c)
+    elif kind == "mask":
+        td.rounded_rectangle((cx - 9 * u, cy - 9 * u, cx + 9 * u, cy + 9 * u), radius=int(6 * u), outline=c, width=w)
+        td.line((cx - 5.5 * u, cy - 2 * u, cx - 2 * u, cy - 0.5 * u), fill=c, width=w)
+        td.line((cx + 5.5 * u, cy - 2 * u, cx + 2 * u, cy - 0.5 * u), fill=c, width=w)
+        td.arc((cx - 4 * u, cy + 1 * u, cx + 4 * u, cy + 7 * u), 20, 160, fill=c, width=w)
+    elif kind == "faces":
+        td.ellipse((cx - 12 * u, cy - 9 * u, cx + 3 * u, cy + 6 * u), outline=c, width=w)
+        td.ellipse((cx - 3 * u, cy - 3 * u, cx + 12 * u, cy + 12 * u), outline=c, width=w)
+        td.arc((cx + 0 * u, cy + 3 * u, cx + 9 * u, cy + 9 * u), 20, 160, fill=c, width=w)
+        td.arc((cx - 9 * u, cy - 2 * u, cx - 0 * u, cy + 3 * u), 200, 340, fill=c, width=w)
+    elif kind == "grid":
+        for k in (-3, 3):
+            td.line((cx + k * u, cy - 11 * u, cx + k * u, cy + 11 * u), fill=c, width=w)
+            td.line((cx - 11 * u, cy + k * u, cx + 11 * u, cy + k * u), fill=c, width=w)
+        td.ellipse((cx - 9.5 * u, cy - 9.5 * u, cx - 5 * u, cy - 5 * u), outline=c, width=w)
+        td.line((cx + 5.2 * u, cy + 5.2 * u, cx + 9.8 * u, cy + 9.8 * u), fill=c, width=w)
+        td.line((cx + 9.8 * u, cy + 5.2 * u, cx + 5.2 * u, cy + 9.8 * u), fill=c, width=w)
+
+
 label = font("seguisb.ttf", 19)
 for i, (icon, name, color) in enumerate(games):
     x = x0 + i * (tw + gap)
@@ -65,9 +102,7 @@ for i, (icon, name, color) in enumerate(games):
     tile.alpha_composite(Image.composite(glow, Image.new("RGBA", (tw, th), (0, 0, 0, 0)), mask))
     td = ImageDraw.Draw(tile)
     td.rounded_rectangle((0, 0, tw - 1, th - 1), radius=r, outline=color + (110,), width=2 * S)
-    # single-codepoint emoji only: variation-selector ones (like crossed swords) measure wrong in Pillow
-    l, t, rr, b = emoji.getbbox(icon)
-    td.text(((tw - (rr - l)) / 2 - l, 34 * S), icon, font=emoji, embedded_color=True)
+    draw_icon(td, icon, tw / 2, 70 * S, color)
     lw = td.textlength(name, font=label)
     td.text(((tw - lw) / 2, 130 * S), name, font=label, fill=(228, 228, 231))
     # shadow under each tile

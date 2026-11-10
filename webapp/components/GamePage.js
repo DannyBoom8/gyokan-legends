@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BottomNav from './BottomNav'
 import '../app/games/games.css'
+import Icon from './Icon'
 
 // the engine is plain JS shared by all games; load it once and reuse it across client navigations
 let engine
@@ -36,9 +37,9 @@ export default function GamePage({ game }) {
   return (
     <div className="min-h-screen bg-black text-white pb-28">
       <div className="px-5 pt-14 pb-5 max-w-3xl mx-auto enter">
-        <button onClick={() => router.push('/games')} className="press text-zinc-500 text-sm mb-3 block">← Games</button>
-        <p className="text-amber-500 text-xs uppercase tracking-wider mb-1">{game.tag}</p>
-        <h1 className="text-2xl font-bold tracking-tight">{game.title}</h1>
+        <button onClick={() => router.push('/games')} className="press label text-zinc-500 mb-4 flex items-center gap-1.5 min-h-8"><Icon name="back" size={16} /> Games</button>
+        <p className="text-amber-500 label mb-1">{game.tag}</p>
+        <h1 className="display text-3xl">{game.title}</h1>
         <p className="text-zinc-500 text-sm mt-1 leading-relaxed">{game.blurb}</p>
       </div>
 

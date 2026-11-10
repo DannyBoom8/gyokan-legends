@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import BottomNav from '../../components/BottomNav'
 import { BUDGET, POWER_TYPES, POWER_BADGES, POWER_COLORS, formatGold } from '../../lib/game'
+import Icon from '../../components/Icon'
+import PageSkeleton, { Sk } from '../../components/Skeleton'
 
 const FILTERS = ['All', ...POWER_TYPES]
 
@@ -110,9 +112,9 @@ function CharactersContent() {
       <div className="px-5 pt-14 pb-4 enter">
         <div className="flex items-center gap-3 mb-1">
           {isSelecting && (
-            <button onClick={() => router.push('/party')} className="text-zinc-500 text-sm">← Back</button>
+            <button onClick={() => router.push('/party')} className="press label text-zinc-500 flex items-center gap-1.5 min-h-8"><Icon name="back" size={16} /> Back</button>
           )}
-          <h1 className="text-2xl font-bold tracking-tight">Characters</h1>
+          <h1 className="display text-3xl">Characters</h1>
         </div>
         {isSelecting && (
           <p className="text-amber-500 text-sm">Selecting {slotType} — slot {slotPosition} · {formatGold(goldLeft)} gold left</p>
@@ -125,33 +127,33 @@ function CharactersContent() {
           placeholder="Search by name..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-3 text-sm outline-none border border-zinc-800 focus:border-amber-500 transition-colors placeholder:text-zinc-600"
+          className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-3 text-base sm:text-sm outline-none border border-zinc-800 focus:border-amber-500 transition-colors placeholder:text-zinc-500"
         />
       </div>
 
       <div className="px-5 mb-4 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
         {FILTERS.map(pt => (
           <button key={pt} onClick={() => setFilter(pt)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 ${filter === pt ? 'bg-amber-500 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
+            className={`label flex-shrink-0 px-3.5 py-2 rounded-full transition-colors duration-150 ${filter === pt ? 'bg-amber-500 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
             {pt}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
+        <div className="skeleton-wrap px-5 flex flex-col gap-2" role="status" aria-label="Loading">
+          {Array.from({ length: 8 }, (_, i) => <Sk key={i} className="h-14 rounded-2xl" style={{ animationDelay: `${i * 80}ms` }} />)}
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full sm:min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-zinc-800/80">
-                <th className="text-left text-zinc-500 text-xs font-medium pl-5 pr-2 py-3">Character</th>
-                <th className="hidden sm:table-cell text-left text-zinc-500 text-xs font-medium px-3 py-3">Type</th>
-                <th className="text-right text-zinc-500 text-xs font-medium px-3 py-3">OVR</th>
-                <th className="text-right text-zinc-500 text-xs font-medium px-3 py-3">Cost</th>
-                <th className="hidden sm:table-cell text-right text-zinc-500 text-xs font-medium px-3 py-3">Favs</th>
+                <th className="label text-left text-zinc-500 pl-5 pr-2 py-3">Character</th>
+                <th className="label hidden sm:table-cell text-left text-zinc-500 px-3 py-3">Type</th>
+                <th className="label text-right text-zinc-500 px-3 py-3">OVR</th>
+                <th className="label text-right text-zinc-500 px-3 py-3">Cost</th>
+                <th className="label hidden sm:table-cell text-right text-zinc-500 px-3 py-3">Favs</th>
                 {isSelecting && <th className="pl-2 pr-5 py-3 w-16"></th>}
               </tr>
             </thead>
@@ -166,8 +168,8 @@ function CharactersContent() {
                           className="w-10 h-10 rounded-xl object-cover flex-shrink-0 bg-zinc-800" />
                         <div className="min-w-0">
                           <p className="text-white text-sm font-medium truncate max-w-[110px]">{char.name}</p>
-                          <p className="text-zinc-600 text-xs truncate max-w-[110px]">{char.anime_title}</p>
-                          <p className={`sm:hidden text-xs ${POWER_COLORS[char.power_type] || 'text-zinc-600'}`}>{char.power_type || '—'}</p>
+                          <p className="text-zinc-500 text-xs truncate max-w-[110px]">{char.anime_title}</p>
+                          <p className={`sm:hidden text-xs ${POWER_COLORS[char.power_type] || 'text-zinc-500'}`}>{char.power_type || '—'}</p>
                         </div>
                       </button>
                     </td>
@@ -176,7 +178,7 @@ function CharactersContent() {
                         <span className={`text-xs px-2 py-0.5 rounded-full ${POWER_BADGES[char.power_type] || 'bg-zinc-800 text-zinc-400'}`}>
                           {char.power_type}
                         </span>
-                      ) : <span className="text-zinc-700 text-xs">—</span>}
+                      ) : <span className="text-zinc-500 text-xs">—</span>}
                     </td>
                     <td className="px-3 py-3 text-right">
                       <span className="text-white">{char.overall || '—'}</span>
@@ -190,7 +192,7 @@ function CharactersContent() {
                     {isSelecting && (
                       <td className="pl-2 pr-5 py-3 text-right">
                         {!alreadyIn && char.gold_cost > goldLeft && (
-                          <span className="text-zinc-600 text-xs whitespace-nowrap">Too pricey</span>
+                          <span className="text-zinc-500 text-xs whitespace-nowrap">Too pricey</span>
                         )}
                         {!alreadyIn && char.gold_cost <= goldLeft && (
                           <button
@@ -210,7 +212,7 @@ function CharactersContent() {
 
           {characters.length === 0 && (
             <div className="text-center py-20">
-              <p className="text-zinc-600 text-sm">No characters found</p>
+              <p className="text-zinc-500 text-sm">No characters found</p>
             </div>
           )}
 
@@ -232,11 +234,7 @@ function CharactersContent() {
 
 export default function Characters() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
-      </div>
-    }>
+    <Suspense fallback={<PageSkeleton variant="list" />}>
       <CharactersContent />
     </Suspense>
   )

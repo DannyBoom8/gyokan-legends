@@ -2,7 +2,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
+import Icon, { IconTile } from '../../components/Icon'
 import BottomNav from '../../components/BottomNav'
+import PageSkeleton from '../../components/Skeleton'
 import { BUDGET, formatGold, formatPoints, nextBattle, nextRank, rankInfo } from '../../lib/game'
 
 export default function Dashboard() {
@@ -44,11 +46,7 @@ export default function Dashboard() {
     load()
   }, [])
 
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
-    </div>
-  )
+  if (loading) return <PageSkeleton variant="dashboard" />
 
   const rank = rankInfo(rankData?.current_rank)
   const seasonPoints = formatPoints(rankData?.season_points)
@@ -64,12 +62,12 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-black text-white pb-28">
       <div className="px-5 pt-14 pb-6 enter">
-        <p className="text-zinc-600 text-xs tracking-widest uppercase mb-1">Welcome back</p>
+        <p className="label text-zinc-500 mb-2">Welcome back</p>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">{user?.username}</h1>
+          <h1 className="display text-3xl">{user?.username}</h1>
           {isLegend && (
-            <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full">
-              ⚡ Legend
+            <span className="hud bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <Icon name="crown" size={14} className="icon-in" />Legend
             </span>
           )}
         </div>
@@ -79,12 +77,12 @@ export default function Dashboard() {
         <div className={`rounded-[28px] border p-4 ${rank.bg}`}>
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Rank</p>
-              <p className={`text-2xl font-bold ${rank.color}`}>{rank.name}</p>
+              <p className="label text-zinc-500 mb-1.5">Rank</p>
+              <p className={`display text-3xl ${rank.color}`}>{rank.name}</p>
             </div>
             <div className="text-right">
-              <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Season points</p>
-              <p className="text-2xl font-bold text-white tabular-nums">{seasonPoints}</p>
+              <p className="label text-zinc-500 mb-1.5">Season points</p>
+              <p className="num text-3xl text-white">{seasonPoints}</p>
             </div>
           </div>
 
@@ -92,19 +90,19 @@ export default function Dashboard() {
             <div className="h-1.5 rounded-full bg-black/40 overflow-hidden">
               <div className="h-full rounded-full bg-amber-500 bar-fill" style={{ scale: `${progress / 100} 1` }} />
             </div>
-            <p className="text-zinc-500 text-xs mt-2">
+            <p className="label text-zinc-500 mt-2.5 !tracking-[0.1em]">
               {upcoming ? `${formatPoints(upcoming.min - seasonPoints)} pts to ${upcoming.name}` : 'Top rank reached'}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-black/30 rounded-xl p-3">
-              <p className="text-zinc-500 text-xs mb-1">Last battle night</p>
-              <p className="text-white font-bold text-lg tabular-nums">{formatPoints(weekPoints)} pts</p>
+              <p className="label text-zinc-500 mb-2">Last battle</p>
+              <p className="num text-xl text-white">{formatPoints(weekPoints)} <span className="label text-zinc-500">pts</span></p>
             </div>
             <div className="bg-black/30 rounded-xl p-3">
-              <p className="text-zinc-500 text-xs mb-1">Gold left</p>
-              <p className={`font-bold text-lg tabular-nums ${goldLeft < 0 ? 'text-red-400' : 'text-amber-400'}`}>{formatGold(goldLeft)}</p>
+              <p className="label text-zinc-500 mb-2">Gold left</p>
+              <p className={`num text-xl ${goldLeft < 0 ? 'text-red-400' : 'text-amber-400'}`}>{formatGold(goldLeft)}</p>
             </div>
           </div>
         </div>
@@ -112,53 +110,53 @@ export default function Dashboard() {
 
       <div className="px-5 flex flex-col gap-3">
         <button onClick={() => router.push('/party')} style={{ '--i': 2 }}
-          className="enter w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left press">
+          className="enter tile w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left press">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">My Party</p>
+              <p className="label text-zinc-500 mb-1.5">My Party</p>
               {partyCount === 0
-                ? <p className="text-white font-semibold">Create your party →</p>
-                : <p className="text-white font-semibold">{partyCount} / 10 characters</p>
+                ? <p className="text-white font-semibold text-lg">Build your party</p>
+                : <p className="text-white font-semibold text-lg"><span className="num">{partyCount}</span> <span className="text-zinc-500">/ 10 fighters</span></p>
               }
             </div>
-            <div className="w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center text-2xl">⚔️</div>
+            <IconTile name="swords" />
           </div>
           {partyCount === 0 && (
-            <p className="text-zinc-600 text-xs mt-2">Pick 10 characters and start earning points</p>
+            <p className="text-zinc-500 text-sm mt-3">Draft 10 fighters and start scoring.</p>
           )}
           {partyCount > 0 && partyCount < 10 && (
-            <p className="text-amber-500/70 text-xs mt-2">{10 - partyCount} slots still empty — empty slots score nothing</p>
+            <p className="text-amber-500 text-sm mt-3">{10 - partyCount} empty slot{10 - partyCount === 1 ? '' : 's'} score nothing</p>
           )}
         </button>
 
         <button onClick={() => router.push('/battles')} style={{ '--i': 3 }}
-          className="enter w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left press">
+          className="enter tile w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left press">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Battles</p>
-              <p className="text-white font-semibold">
+              <p className="label text-zinc-500 mb-1.5">Battles</p>
+              <p className="text-white font-semibold text-lg">
                 Next battle {battleIsToday ? 'today' : `in ${daysToBattle} day${daysToBattle === 1 ? '' : 's'}`}
               </p>
             </div>
-            <div className="w-11 h-11 rounded-xl bg-zinc-800 flex items-center justify-center text-2xl">🔥</div>
+            <IconTile name="flame" index={1} />
           </div>
-          <p className="text-zinc-600 text-xs mt-2">
-            {battle.toLocaleString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' })} · see last results
+          <p className="text-zinc-500 text-sm mt-3">
+            {battle.toLocaleString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' })} · last results
           </p>
         </button>
 
         <div className="grid grid-cols-2 gap-3 enter" style={{ '--i': 4 }}>
           <button onClick={() => router.push('/leaderboard')}
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left press">
-            <div className="text-2xl mb-2">🏆</div>
-            <p className="text-white font-semibold text-sm">Leaderboard</p>
-            <p className="text-zinc-600 text-xs mt-0.5">See who leads</p>
+            className="tile bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left press">
+            <div className="tile-icon text-amber-500 mb-3 origin-left w-fit"><Icon name="trophy" size={24} className="icon-in" style={{ '--i': 2 }} /></div>
+            <p className="display text-base">Leaderboard</p>
+            <p className="text-zinc-500 text-sm mt-1">See who leads</p>
           </button>
           <button onClick={() => router.push('/rules')}
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left press">
-            <div className="text-2xl mb-2">📜</div>
-            <p className="text-white font-semibold text-sm">How to play</p>
-            <p className="text-zinc-600 text-xs mt-0.5">Slots, types, ranks</p>
+            className="tile bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left press">
+            <div className="tile-icon text-amber-500 mb-3 origin-left w-fit"><Icon name="scroll" size={24} className="icon-in" style={{ '--i': 3 }} /></div>
+            <p className="display text-base">How to play</p>
+            <p className="text-zinc-500 text-sm mt-1">Slots, types, ranks</p>
           </button>
         </div>
       </div>

@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import BottomNav from '../../components/BottomNav'
+import PageSkeleton from '../../components/Skeleton'
 import { SLOT_COLORS, formatPoints } from '../../lib/game'
+import Icon from '../../components/Icon'
 
 export default function Points() {
   const [loading, setLoading] = useState(true)
@@ -38,11 +40,7 @@ export default function Points() {
     load()
   }, [])
 
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
-    </div>
-  )
+  if (loading) return <PageSkeleton variant="list" />
 
   const totalThisWeek = formatPoints(points.reduce((sum, p) => sum + Number(p.final_points || 0), 0))
   const seasonPoints = formatPoints(rankData?.season_points)
@@ -50,34 +48,34 @@ export default function Points() {
   return (
     <div className="min-h-screen bg-black text-white pb-28">
       <div className="px-5 pt-14 pb-6 enter">
-        <button onClick={() => router.push('/dashboard')} className="text-zinc-500 text-sm mb-3 block">
-          ← Dashboard
+        <button onClick={() => router.push('/dashboard')} className="press label text-zinc-500 mb-4 flex items-center gap-1.5 min-h-8">
+          <Icon name="back" size={16} /> Dashboard
         </button>
-        <h1 className="text-2xl font-bold tracking-tight">Points</h1>
+        <h1 className="display text-3xl">Points</h1>
       </div>
 
       <div className="mx-5 mb-5 grid grid-cols-2 gap-3 enter" style={{ '--i': 1 }}>
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-          <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Season total</p>
-          <p className="text-white font-bold text-2xl tabular-nums">{seasonPoints}</p>
+          <p className="text-zinc-500 label mb-1">Season total</p>
+          <p className="num text-3xl text-white">{seasonPoints}</p>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-          <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Last battle</p>
-          <p className="text-amber-400 font-bold text-2xl tabular-nums">{totalThisWeek}</p>
+          <p className="text-zinc-500 label mb-1">Last battle</p>
+          <p className="num text-3xl text-amber-400">{totalThisWeek}</p>
         </div>
       </div>
 
       {points.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-5">
-          <div className="text-5xl mb-4">📊</div>
-          <h2 className="text-white font-bold text-lg mb-2">No points yet</h2>
+          <div className="text-amber-500 mb-4"><Icon name="chart" size={48} className="icon-in icon-float" /></div>
+          <h2 className="display text-xl mb-2">No points yet</h2>
           <p className="text-zinc-500 text-sm text-center leading-relaxed">
             Your breakdown will appear here after your first Thursday battle. Make sure your party is ready.
           </p>
         </div>
       ) : (
         <div className="px-5 flex flex-col gap-2 enter" style={{ '--i': 2 }}>
-          <p className="text-zinc-500 text-xs uppercase tracking-wider mb-2">Last battle night</p>
+          <p className="text-zinc-500 label mb-2">Last battle night</p>
           {points.map(p => (
             <div key={p.points_id} className="bg-zinc-900 border border-zinc-800 rounded-[24px] p-3 flex items-center gap-3">
               <img src={p.characters?.image_url} alt={p.characters?.name}
@@ -87,14 +85,14 @@ export default function Points() {
                 <div className="flex items-center gap-2">
                   <span className={`text-xs ${SLOT_COLORS[p.slot_type] || 'text-zinc-400'}`}>{p.slot_type}</span>
                   {p.medic_boost_applied && (
-                    <span className="text-green-400 text-xs">⚡ Medic boost</span>
+                    <span className="hud !p-0 text-green-400 !tracking-[0.08em]"><Icon name="bolt" size={12} />Medic boost</span>
                   )}
                 </div>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className={`font-bold tabular-nums ${Number(p.final_points) > 0 ? 'text-white' : 'text-zinc-600'}`}>{formatPoints(p.final_points)} pts</p>
+                <p className={`num text-lg ${Number(p.final_points) > 0 ? 'text-white' : 'text-zinc-500'}`}>{formatPoints(p.final_points)} pts</p>
                 {p.medic_boost_applied && (
-                  <p className="text-zinc-600 text-xs line-through">{p.base_points} pts</p>
+                  <p className="text-zinc-500 text-xs line-through">{p.base_points} pts</p>
                 )}
               </div>
             </div>

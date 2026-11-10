@@ -3,7 +3,9 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import BottomNav from '../../components/BottomNav'
+import PageSkeleton from '../../components/Skeleton'
 import { BEATS, POWER_BADGES, STATS, formatGold } from '../../lib/game'
+import Icon from '../../components/Icon'
 
 // PostgREST returns a one-to-one embed as an object, older setups as an array
 const one = (r) => Array.isArray(r) ? r[0] : r
@@ -41,16 +43,12 @@ function CharacterProfile() {
     load()
   }, [id])
 
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
-    </div>
-  )
+  if (loading) return <PageSkeleton variant="detail" />
 
   if (!char) return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-4">
       <p className="text-zinc-500 text-sm">Character not found</p>
-      <button onClick={() => router.back()} className="text-amber-500 text-sm">← Go back</button>
+      <button onClick={() => router.back()} className="press text-amber-500 text-sm">Go back</button>
     </div>
   )
 
@@ -69,15 +67,15 @@ function CharacterProfile() {
         <img src={char.image_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black" />
         <button onClick={() => router.back()} className="press absolute top-12 left-5 text-zinc-200 text-sm bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5">
-          ← Back
+          <Icon name="back" size={16} /> Back
         </button>
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-4 enter">
           <img src={char.image_url} alt={char.name} className="w-28 h-36 rounded-2xl object-cover border border-white/10 shadow-2xl bg-zinc-800" />
           <div className="min-w-0 pb-1">
-            <h1 className="text-2xl font-bold tracking-tight leading-tight">{char.name}</h1>
+            <h1 className="display text-3xl">{char.name}</h1>
             <p className="text-zinc-400 text-sm truncate">{char.anime_title}</p>
             {char.power_type && (
-              <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${POWER_BADGES[char.power_type]}`}>{char.power_type}</span>
+              <span className={`hud !py-0.5 !px-2.5 mt-2 ${POWER_BADGES[char.power_type]}`}>{char.power_type}</span>
             )}
           </div>
         </div>
@@ -90,22 +88,22 @@ function CharacterProfile() {
           ['Record', `${record.W}-${record.D}-${record.L}`, 'text-white'],
         ].map(([label, value, color]) => (
           <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 text-center">
-            <p className="text-zinc-500 text-xs mb-1">{label}</p>
-            <p className={`font-bold text-lg tabular-nums ${color}`}>{value}</p>
+            <p className="label text-zinc-500 mb-2">{label}</p>
+            <p className={`num text-xl ${color}`}>{value}</p>
           </div>
         ))}
       </div>
 
       <div className="mx-5 mt-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-5 enter" style={{ '--i': 2 }}>
-        <p className="text-zinc-500 text-xs uppercase tracking-wider mb-4">Stats</p>
+        <p className="text-zinc-500 label mb-4">Stats</p>
         <div className="flex flex-col gap-3">
           {STATS.map(s => (
             <div key={s} className="flex items-center gap-3">
-              <span className="text-zinc-400 text-xs w-20 capitalize">{s === 'iq' ? 'IQ' : s}</span>
+              <span className="label text-zinc-400 w-20">{s === 'iq' ? 'IQ' : s}</span>
               <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div className="h-full bg-amber-500 rounded-full bar-fill" style={{ scale: `${(char[s] || 0) / 100} 1` }} />
               </div>
-              <span className="text-white text-xs w-6 text-right tabular-nums">{char[s] ?? '—'}</span>
+              <span className="num text-white text-sm w-7 text-right">{char[s] ?? '—'}</span>
             </div>
           ))}
         </div>
@@ -117,9 +115,9 @@ function CharacterProfile() {
       </div>
 
       <div className="mx-5 mt-4 enter" style={{ '--i': 3 }}>
-        <p className="text-zinc-500 text-xs uppercase tracking-wider mb-3">Recent battles</p>
+        <p className="text-zinc-500 label mb-3">Recent battles</p>
         {fights.length === 0 ? (
-          <p className="text-zinc-600 text-sm">No battles yet. The first one is on Thursday.</p>
+          <p className="text-zinc-500 text-sm">No battles yet. The first one is on Thursday.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {fights.slice(0, 5).map(fx => {
@@ -128,10 +126,10 @@ function CharacterProfile() {
               return (
                 <button key={fx.fixture_id} onClick={() => router.push(`/character?id=${opp?.character_id}`)}
                   className="press bg-zinc-900 border border-zinc-800 rounded-[20px] p-3 flex items-center gap-3 text-left">
-                  <span className={`w-7 text-center font-bold text-sm ${o === 'W' ? 'text-amber-400' : o === 'L' ? 'text-zinc-600' : 'text-zinc-400'}`}>{o}</span>
+                  <span className={`w-7 text-center font-bold text-sm ${o === 'W' ? 'text-amber-400' : o === 'L' ? 'text-zinc-500' : 'text-zinc-400'}`}>{o}</span>
                   <img src={opp?.image_url} alt="" className="w-9 h-9 rounded-lg object-cover bg-zinc-800" />
                   <p className="flex-1 text-sm text-white truncate">vs {opp?.name}</p>
-                  <span className="text-zinc-600 text-xs">GW {one(fx.gameweeks)?.gameweek_number}</span>
+                  <span className="text-zinc-500 text-xs">GW {one(fx.gameweeks)?.gameweek_number}</span>
                 </button>
               )
             })}

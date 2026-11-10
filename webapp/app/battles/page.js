@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
 import BottomNav from '../../components/BottomNav'
+import PageSkeleton from '../../components/Skeleton'
 import { nextBattle } from '../../lib/game'
+import Icon from '../../components/Icon'
 
 const FIXTURE_FIELDS = `
   fixture_id,
@@ -28,8 +30,8 @@ function Fixture({ fixture, mine, onOpen }) {
         <img src={c?.image_url} alt={c?.name}
           className={`w-14 h-14 rounded-xl object-cover bg-zinc-800 ${mine.has(c?.character_id) ? 'ring-2 ring-amber-500' : ''}`} />
         <p className="text-white text-xs font-medium text-center leading-tight line-clamp-2 max-w-[90px]">{c?.name}</p>
-        <p className="text-zinc-600 text-[10px]">{c?.power_type} · {c?.overall}</p>
-        {won && <span className="text-amber-400 text-xs font-bold">WIN</span>}
+        <p className="text-zinc-500 text-[10px]">{c?.power_type} · {c?.overall}</p>
+        {won && <span className="hud !p-0 text-amber-400">Win</span>}
       </button>
     )
   }
@@ -39,9 +41,9 @@ function Fixture({ fixture, mine, onOpen }) {
       <div className="flex items-center gap-2">
         {side(fixture.char_a)}
         <div className="flex flex-col items-center gap-1 px-2">
-          <span className="text-zinc-600 text-xs font-bold">VS</span>
-          {isDraw && <span className="text-zinc-400 text-xs font-medium">DRAW</span>}
-          {!result && <span className="text-zinc-700 text-xs">—</span>}
+          <span className="display text-zinc-500 text-sm">VS</span>
+          {isDraw && <span className="hud !p-0 text-zinc-400">Draw</span>}
+          {!result && <span className="text-zinc-500 text-xs">—</span>}
         </div>
         {side(fixture.char_b)}
       </div>
@@ -94,11 +96,7 @@ export default function Battles() {
     load()
   }, [])
 
-  if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
-    </div>
-  )
+  if (loading) return <PageSkeleton variant="list" />
 
   const open = (cid) => cid && router.push(`/character?id=${cid}`)
   const battle = nextBattle()
@@ -107,7 +105,7 @@ export default function Battles() {
   return (
     <div className="min-h-screen bg-black text-white pb-28">
       <div className="px-5 pt-14 pb-6 enter">
-        <h1 className="text-2xl font-bold tracking-tight">Battles</h1>
+        <h1 className="display text-3xl">Battles</h1>
         <p className="text-zinc-500 text-sm mt-1">
           {gameweek
             ? `Gameweek ${gameweek.gameweek_number} · ${new Date(gameweek.battle_date).toDateString()}`
@@ -118,14 +116,14 @@ export default function Battles() {
 
       {!gameweek ? (
         <div className="flex flex-col items-center justify-center py-20 px-5">
-          <div className="text-6xl mb-5">⚔️</div>
-          <h2 className="text-white font-bold text-lg mb-2">No battles yet</h2>
+          <div className="text-amber-500 mb-5"><Icon name="swords" size={56} className="icon-in icon-float" /></div>
+          <h2 className="display text-xl mb-2">No battles yet</h2>
           <p className="text-zinc-500 text-sm text-center leading-relaxed">
             Every Thursday all characters are paired at random and fight. Build your party and come back then.
           </p>
           <div className="mt-6 w-full max-w-xs bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-            <p className="text-zinc-500 text-xs uppercase tracking-wider mb-2">Next battle night</p>
-            <p className="text-white font-bold text-lg">
+            <p className="text-zinc-500 label mb-2">Next battle night</p>
+            <p className="display text-xl">
               {battle.toLocaleString(undefined, { weekday: 'long', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}
             </p>
           </div>
@@ -135,8 +133,8 @@ export default function Battles() {
           {myFixtures.length > 0 && (
             <>
               <div className="flex items-baseline justify-between">
-                <p className="text-amber-500 text-xs uppercase tracking-wider">Your fighters</p>
-                <p className="text-zinc-500 text-xs">{myWins} / {myFixtures.length} won</p>
+                <p className="label text-amber-500">Your fighters</p>
+                <p className="label text-zinc-500 !tracking-[0.08em]">{myWins} / {myFixtures.length} won</p>
               </div>
               {myFixtures.map(f => <Fixture key={f.fixture_id} fixture={f} mine={mine} onOpen={open} />)}
             </>
@@ -144,11 +142,11 @@ export default function Battles() {
           {mine.size === 0 && (
             <button onClick={() => router.push('/party')}
               className="press bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-left">
-              <p className="text-amber-400 text-sm font-semibold">You had no fighters this week</p>
-              <p className="text-zinc-500 text-xs mt-1">Build your party before Thursday to score →</p>
+              <p className="display text-amber-400 text-base">You had no fighters this week</p>
+              <p className="text-zinc-500 text-sm mt-1">Build your party before Thursday to score</p>
             </button>
           )}
-          <p className="text-zinc-500 text-xs uppercase tracking-wider mt-3">Around the arena</p>
+          <p className="text-zinc-500 label mt-3">Around the arena</p>
           {otherFixtures.map(f => <Fixture key={f.fixture_id} fixture={f} mine={mine} onOpen={open} />)}
         </div>
       )}

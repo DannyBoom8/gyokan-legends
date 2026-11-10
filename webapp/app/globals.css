@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --font-display: var(--font-display-face), var(--font-geist), system-ui, sans-serif;
+  /* zinc-500 lifted so secondary text passes 4.5:1 on black AND on zinc-900 cards */
+  --color-zinc-500: oklch(0.7 0.012 286);
+}
+
 :root {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
@@ -15,6 +21,47 @@ html {
 
 body {
   -webkit-font-smoothing: antialiased;
+}
+
+/* game-feel type roles */
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.label {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.hud {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
 }
 
 .scrollbar-hide {
@@ -99,7 +146,77 @@ img:not([aria-hidden]) {
   }
 }
 
+/* skeleton loaders: shimmer is a transform on a pseudo-element, so it stays on the compositor */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: oklch(0.27 0.005 286);
+  border-radius: 12px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, oklch(1 0 0 / 0.07) 50%, transparent 80%);
+  translate: -100% 0;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  to { translate: 100% 0; }
+}
+.skeleton-wrap { animation: appear 200ms ease-out both; }
+
+/* route change: every page remounts through app/template.js. Opacity only, and the fill is
+   dropped afterwards: a lingering transform/filter would trap the fixed bottom nav. */
+@keyframes page-in {
+  from { opacity: 0; }
+}
+.page-in { animation: page-in 260ms var(--ease-out) backwards; }
+
+/* icons: arrive with opacity + scale + blur, never bounce */
+@keyframes icon-in {
+  from {
+    opacity: 0;
+    scale: 0.25;
+    filter: blur(4px);
+  }
+}
+.icon-in { animation: icon-in 300ms cubic-bezier(0.2, 0, 0, 1) both; animation-delay: calc(var(--i, 0) * 60ms + 120ms); }
+
+/* one slow idle loop per icon, only on elements that opt in */
+@keyframes icon-float {
+  50% { translate: 0 -2px; }
+}
+@keyframes icon-glow {
+  50% { opacity: 0.65; }
+}
+@keyframes icon-spin-slow {
+  to { rotate: 360deg; }
+}
+.icon-float { animation: icon-float 3.2s ease-in-out infinite; }
+.icon-glow { animation: icon-glow 2.4s ease-in-out infinite; }
+.icon-spin { animation: icon-spin-slow 14s linear infinite; }
+
+@media (hover: hover) and (pointer: fine) {
+  .tile:hover .tile-icon { scale: 1.08; rotate: -4deg; }
+}
+.tile-icon { transition: scale 200ms var(--ease-out), rotate 200ms var(--ease-out); }
+
+/* live pulse dot for "battle today" style status */
+@keyframes ping {
+  75%, 100% { scale: 2.2; opacity: 0; }
+}
+.ping { animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
 @media (prefers-reduced-motion: reduce) {
+  .skeleton::after,
+  .icon-float,
+  .icon-glow,
+  .icon-spin,
+  .ping { animation: none; }
+  .page-in { animation-name: appear; }
+  .icon-in { animation-name: appear; animation-delay: 0ms; }
+  .tile:hover .tile-icon { scale: none; rotate: none; }
   .enter {
     animation-name: appear;
     animation-delay: 0ms;

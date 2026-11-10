@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
+import Icon from './Icon'
 
 export default function BottomNav({ active }) {
   const [showMore, setShowMore] = useState(false)
@@ -53,10 +54,10 @@ export default function BottomNav({ active }) {
   ]
 
   const moreItems = [
-    { id: 'characters', label: 'Characters', emoji: '🎴', path: '/characters' },
-    { id: 'points', label: 'Points', emoji: '📊', path: '/points' },
-    { id: 'leaderboard', label: 'Leaderboard', emoji: '🏆', path: '/leaderboard' },
-    { id: 'rules', label: 'How to play', emoji: '📜', path: '/rules' },
+    { id: 'characters', label: 'Characters', icon: 'cards', path: '/characters' },
+    { id: 'points', label: 'Points', icon: 'chart', path: '/points' },
+    { id: 'leaderboard', label: 'Leaderboard', icon: 'trophy', path: '/leaderboard' },
+    { id: 'rules', label: 'How to play', icon: 'scroll', path: '/rules' },
   ]
 
   return (
@@ -65,19 +66,19 @@ export default function BottomNav({ active }) {
         <div className="scrim fixed inset-0 z-40 bg-black/50" onClick={() => setShowMore(false)}>
           <div className="menu-pop absolute right-4 w-60 bottom-[calc(5rem+env(safe-area-inset-bottom))]" onClick={e => e.stopPropagation()}>
             <div className="material bg-zinc-900/80 backdrop-blur-xl backdrop-saturate-150 border border-white/10 rounded-[20px] p-1.5 shadow-2xl">
-              {moreItems.map(item => (
+              {moreItems.map((item, i) => (
                 <button key={item.label}
                   onClick={() => { router.push(item.path); setShowMore(false) }}
                   aria-current={active === item.id ? 'page' : undefined}
                   className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] transition-colors duration-150 active:bg-white/10 ${active === item.id ? 'bg-white/[0.06]' : ''}`}>
-                  <span className="text-lg">{item.emoji}</span>
+                  <Icon name={item.icon} size={20} className={`icon-in ${active === item.id ? 'text-amber-500' : 'text-zinc-500'}`} style={{ '--i': i }} />
                   <span className="text-white text-sm">{item.label}</span>
                 </button>
               ))}
               <div className="h-px bg-white/10 mx-3 my-1" />
               <button onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] transition-colors duration-150 active:bg-white/10">
-                <span className="text-lg">🚪</span>
+                <Icon name="logout" size={20} className="icon-in text-red-400" style={{ '--i': 4 }} />
                 <span className="text-red-400 text-sm font-medium">Log Out</span>
               </button>
             </div>
@@ -100,7 +101,7 @@ export default function BottomNav({ active }) {
                 }}
                 className={`press flex-1 flex flex-col items-center gap-1 py-3 ${isActive ? 'text-amber-500' : 'text-zinc-500'}`}>
                 {tab.icon(isActive)}
-                <span className="text-xs">{tab.label}</span>
+                <span className="label !text-[0.6875rem] !tracking-[0.1em]">{tab.label}</span>
               </button>
             )
           })}

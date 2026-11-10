@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
+import Icon from '../components/Icon'
+import { Sk } from '../components/Skeleton'
 
 const OFFLINE = "Can't reach the Gyokan servers right now. Try again in a moment."
 // supabase reports network failures as a retryable fetch error with status 0
@@ -69,8 +71,12 @@ export default function LandingPage() {
   }
 
   if (checking) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
+    <div className="skeleton-wrap min-h-screen bg-black flex flex-col items-center justify-center px-6" role="status" aria-label="Loading">
+      <Sk className="h-12 w-56 mb-4" />
+      <Sk className="h-4 w-40 mb-10" />
+      <Sk className="h-12 w-full max-w-sm mb-3" />
+      <Sk className="h-12 w-full max-w-sm mb-3" />
+      <Sk className="h-12 w-full max-w-sm" />
     </div>
   )
 
@@ -78,16 +84,16 @@ export default function LandingPage() {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10 enter">
-          <h1 className="text-5xl font-bold text-amber-500 tracking-[-0.03em]">GYOKAN</h1>
-          <p className="text-zinc-500 text-xs tracking-[0.3em] uppercase mt-1">Legends</p>
-          <p className="text-zinc-600 text-xs mt-3">Rise. Battle. Become Legend.</p>
+          <h1 className="display text-6xl text-amber-500 !tracking-[0.02em]">Gyokan</h1>
+          <p className="label text-zinc-500 !tracking-[0.4em] mt-2">Legends</p>
+          <p className="text-zinc-500 text-sm mt-4">Rise. Battle. Become Legend.</p>
         </div>
 
         <div className="flex bg-zinc-900 rounded-2xl p-1 mb-6 enter" style={{ '--i': 2 }}>
           {['login', 'signup'].map(t => (
             <button key={t} onClick={() => { setTab(t); setError('') }}
-              className={`flex-1 py-3 rounded-xl text-sm font-medium transition-colors duration-150 ${tab === t ? 'bg-amber-500 text-black' : 'text-zinc-500'}`}>
-              {t === 'login' ? 'Login' : 'Sign Up'}
+              className={`label !text-[0.8125rem] flex-1 py-3.5 rounded-xl transition-colors duration-150 ${tab === t ? 'bg-amber-500 text-black' : 'text-zinc-500'}`}>
+              {t === 'login' ? 'Login' : 'Sign up'}
             </button>
           ))}
         </div>
@@ -98,7 +104,7 @@ export default function LandingPage() {
             placeholder="Username"
             value={username}
             onChange={e => setUsername(e.target.value)}
-            className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-4 text-sm outline-none border border-zinc-800 focus:border-amber-500 transition-colors placeholder:text-zinc-600"
+            className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-4 text-base sm:text-sm outline-none border border-zinc-800 focus:border-amber-500 transition-colors placeholder:text-zinc-500"
           />
           <input
             type="password"
@@ -106,34 +112,34 @@ export default function LandingPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && (tab === 'login' ? handleLogin() : handleSignup())}
-            className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-4 text-sm outline-none border border-zinc-800 focus:border-amber-500 transition-colors placeholder:text-zinc-600"
+            className="w-full bg-zinc-900 text-white rounded-2xl px-4 py-4 text-base sm:text-sm outline-none border border-zinc-800 focus:border-amber-500 transition-colors placeholder:text-zinc-500"
           />
 
-          {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+          {error && <p role="alert" className="text-red-400 text-sm text-center">{error}</p>}
 
           <button
             onClick={tab === 'login' ? handleLogin : handleSignup}
             disabled={loading}
-            className="w-full bg-amber-500 text-black font-bold rounded-2xl py-4 text-sm press disabled:opacity-50 mt-1">
-            {loading ? 'Please wait...' : tab === 'login' ? 'Enter the Arena' : 'Join Gyokan Legends'}
+            className="display w-full bg-amber-500 text-black rounded-2xl py-4 text-base !tracking-[0.06em] press disabled:opacity-50 mt-1">
+            {loading ? 'Please wait…' : tab === 'login' ? 'Enter the Arena' : 'Join Gyokan Legends'}
           </button>
         </div>
 
         {tab === 'signup' && (
-          <p className="text-zinc-700 text-xs text-center mt-4">
+          <p className="text-zinc-500 text-sm text-center mt-4">
             Username min 3 chars · Password min 5 chars
           </p>
         )}
         <button onClick={() => router.push('/games')}
-          className="press enter w-full mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3.5 flex items-center justify-between text-left"
+          className="group press enter w-full mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3.5 flex items-center justify-between text-left"
           style={{ '--i': 4 }}>
           <span>
-            <span className="block text-white text-sm font-medium">Play free anime games</span>
-            <span className="block text-zinc-500 text-xs mt-0.5">Hangman, Imposter, Charades and more. No account needed.</span>
+            <span className="display block text-base">Play free anime games</span>
+            <span className="block text-zinc-500 text-sm mt-1">Hangman, Imposter, Charades and more. No account needed.</span>
           </span>
-          <span className="text-amber-500 text-lg" aria-hidden>→</span>
+          <Icon name="arrow" size={20} className="text-amber-500 transition-transform duration-200 group-active:translate-x-0.5" />
         </button>
-        <p className="text-zinc-800 text-xs text-center mt-10">A Gyokan Product</p>
+        <p className="label text-zinc-500 text-center mt-10">A Gyokan product</p>
       </div>
     </div>
   )

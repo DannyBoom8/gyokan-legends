@@ -1,7 +1,8 @@
-import { Geist } from "next/font/google";
+import { Geist, Chakra_Petch } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const display = Chakra_Petch({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display-face" });
 
 const description =
   "Free anime games. Draft legends for weekly battles, or play Hangu-Manu, Anime Imposter, Anime Charades and Category Tic Tac Toe with friends. Nothing to download.";
@@ -16,14 +17,14 @@ export const metadata = {
     description,
     url: "/",
     siteName: "Gyokan Legends",
-    images: [{ url: "/og.png?v=3", width: 1200, height: 630, alt: "Gyokan Legends logo above five game tiles: Legends, Hangu-Manu, Imposter, Charades and Tic Tac Toe" }],
+    images: [{ url: "/og.png?v=4", width: 1200, height: 630, alt: "Gyokan Legends logo above five game tiles: Legends, Hangu-Manu, Imposter, Charades and Tic Tac Toe" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: shareTitle,
     description,
-    images: ["/og.png?v=3"],
+    images: ["/og.png?v=4"],
   },
 };
 
@@ -35,7 +36,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geist.className} antialiased bg-black`}>
+      <body className={`${geist.className} ${geist.variable} ${display.variable} antialiased bg-black`}>
         {children}
       </body>
     </html>
