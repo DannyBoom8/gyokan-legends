@@ -63,18 +63,18 @@ export default function Party() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm">Loading...</p>
+      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
     </div>
   )
 
   return (
     <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-4">
-        <h1 className="text-2xl font-bold">My Party</h1>
+      <div className="px-5 pt-14 pb-4 enter">
+        <h1 className="text-2xl font-bold tracking-tight">My Party</h1>
         <p className="text-zinc-500 text-sm mt-1">Build your roster of 10 characters</p>
       </div>
 
-      <div className="mx-5 mb-5 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
+      <div style={{ '--i': 1 }} className="enter mx-5 mb-5 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
         <div>
           <p className="text-zinc-500 text-xs">Gold remaining</p>
           <p className={`font-bold text-xl ${goldRemaining < 0 ? 'text-red-400' : 'text-amber-400'}`}>
@@ -100,10 +100,10 @@ export default function Party() {
       )}
 
       <div className="px-5 flex flex-col gap-5">
-        {SLOT_DEFS.map(def => {
+        {SLOT_DEFS.map((def, defIndex) => {
           const filled = slots.filter(s => s.slot_type === def.type)
           return (
-            <div key={def.type}>
+            <div key={def.type} className="enter" style={{ '--i': defIndex + 2 }}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className={`font-semibold text-sm ${def.color}`}>{def.type}</span>
@@ -119,8 +119,8 @@ export default function Party() {
                 {Array.from({ length: def.count }).map((_, i) => {
                   const slot = filled[i]
                   return slot ? (
-                    <div key={slot.id} className={`rounded-2xl border p-3 flex items-center gap-3 ${def.border}`}>
-                      <button onClick={() => router.push(`/characters/${slot.character_id}`)}
+                    <div key={slot.id} className={`rounded-[24px] border p-3 flex items-center gap-3 ${def.border}`}>
+                      <button onClick={() => router.push(`/character?id=${slot.character_id}`)}
                         className="flex-1 min-w-0 flex items-center gap-3 text-left">
                       <img src={slot.characters?.image_url} alt={slot.characters?.name}
                         className="w-12 h-12 rounded-xl object-cover flex-shrink-0 bg-zinc-800" />
@@ -137,7 +137,7 @@ export default function Party() {
                         <button
                           onClick={() => removeCharacter(slot.id)}
                           disabled={removing === slot.id}
-                          className="text-zinc-600 text-xs mt-1 active:text-red-400 disabled:opacity-30">
+                          className="text-zinc-500 text-xs mt-1 py-1 -my-1 transition-colors duration-150 active:text-red-400 disabled:opacity-30">
                           {removing === slot.id ? '...' : 'Remove'}
                         </button>
                       </div>
@@ -146,7 +146,7 @@ export default function Party() {
                     <button
                       key={`empty-${i}`}
                       onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
-                      className={`w-full rounded-2xl border border-dashed p-3 flex items-center gap-3 active:opacity-50 transition-all ${def.empty}`}>
+                      className={`w-full rounded-[24px] border border-dashed p-3 flex items-center gap-3 press ${def.empty}`}>
                       <div className="w-12 h-12 rounded-xl bg-zinc-800/50 flex items-center justify-center text-zinc-600 text-xl flex-shrink-0">+</div>
                       <p className="text-zinc-600 text-sm">Add {def.type}</p>
                     </button>

@@ -3,6 +3,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 
+const OFFLINE = "Can't reach the Gyokan servers right now. Try again in a moment."
+// supabase reports network failures as a retryable fetch error with status 0
+const isOffline = (error) => error?.name === 'AuthRetryableFetchError' || error?.status === 0
+
 export default function LandingPage() {
   const [tab, setTab] = useState('login')
   const [username, setUsername] = useState('')
@@ -29,7 +33,7 @@ export default function LandingPage() {
       email: toEmail(username),
       password,
     })
-    if (error) { setError('Invalid username or password'); setLoading(false) }
+    if (error) { setError(isOffline(error) ? OFFLINE : 'Invalid username or password'); setLoading(false) }
     else router.push('/dashboard')
   }
 
@@ -55,7 +59,7 @@ export default function LandingPage() {
       options: { data: { username: username.trim() } },
     })
 
-    if (error) { setError(error.message); setLoading(false); return }
+    if (error) { setError(isOffline(error) ? OFFLINE : error.message); setLoading(false); return }
 
     if (data.user) {
       await supabase.from('users').insert({ id: data.user.id, username: username.trim() })
@@ -66,29 +70,29 @@ export default function LandingPage() {
 
   if (checking) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm">Loading...</p>
+      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
     </div>
   )
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold text-amber-500 tracking-tight">GYOKAN</h1>
+        <div className="text-center mb-10 enter">
+          <h1 className="text-5xl font-bold text-amber-500 tracking-[-0.03em]">GYOKAN</h1>
           <p className="text-zinc-500 text-xs tracking-[0.3em] uppercase mt-1">Legends</p>
           <p className="text-zinc-600 text-xs mt-3">Rise. Battle. Become Legend.</p>
         </div>
 
-        <div className="flex bg-zinc-900 rounded-2xl p-1 mb-6">
+        <div className="flex bg-zinc-900 rounded-2xl p-1 mb-6 enter" style={{ '--i': 2 }}>
           {['login', 'signup'].map(t => (
             <button key={t} onClick={() => { setTab(t); setError('') }}
-              className={`flex-1 py-3 rounded-xl text-sm font-medium transition-all ${tab === t ? 'bg-amber-500 text-black' : 'text-zinc-500'}`}>
+              className={`flex-1 py-3 rounded-xl text-sm font-medium transition-colors duration-150 ${tab === t ? 'bg-amber-500 text-black' : 'text-zinc-500'}`}>
               {t === 'login' ? 'Login' : 'Sign Up'}
             </button>
           ))}
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 enter" style={{ '--i': 3 }}>
           <input
             type="text"
             placeholder="Username"
@@ -110,7 +114,7 @@ export default function LandingPage() {
           <button
             onClick={tab === 'login' ? handleLogin : handleSignup}
             disabled={loading}
-            className="w-full bg-amber-500 text-black font-bold rounded-2xl py-4 text-sm transition-all active:scale-95 disabled:opacity-50 mt-1">
+            className="w-full bg-amber-500 text-black font-bold rounded-2xl py-4 text-sm press disabled:opacity-50 mt-1">
             {loading ? 'Please wait...' : tab === 'login' ? 'Enter the Arena' : 'Join Gyokan Legends'}
           </button>
         </div>

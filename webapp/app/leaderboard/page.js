@@ -31,7 +31,7 @@ export default function Leaderboard() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm">Loading...</p>
+      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
     </div>
   )
 
@@ -39,8 +39,8 @@ export default function Leaderboard() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-6">
-        <h1 className="text-2xl font-bold">Leaderboard</h1>
+      <div className="px-5 pt-14 pb-6 enter">
+        <h1 className="text-2xl font-bold tracking-tight">Leaderboard</h1>
         <p className="text-zinc-500 text-sm mt-1">Season points · top 100</p>
       </div>
 
@@ -54,8 +54,8 @@ export default function Leaderboard() {
             const rank = rankInfo(r.current_rank)
             const isMe = r.username === me
             return (
-              <div key={r.username}
-                className={`rounded-2xl border p-3 flex items-center gap-3 ${isMe ? 'border-amber-500/40 bg-amber-500/5' : 'border-zinc-800 bg-zinc-900'}`}>
+              <div key={r.username} style={{ '--i': i + 1 }}
+                className={`enter rounded-2xl border p-3 flex items-center gap-3 ${isMe ? 'border-amber-500/40 bg-amber-500/5' : 'border-zinc-800 bg-zinc-900'}`}>
                 <span className="w-8 text-center text-sm font-bold text-zinc-500 tabular-nums">{medal[i] || i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium truncate">

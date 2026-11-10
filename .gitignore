@@ -155,4 +155,4 @@ webapp/node_modules/
 webapp/.env.local
 
 # General
-.DS_Store
+.DS_Store.wrangler/

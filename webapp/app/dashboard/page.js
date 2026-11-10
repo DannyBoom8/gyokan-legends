@@ -46,7 +46,7 @@ export default function Dashboard() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm">Loading...</p>
+      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
     </div>
   )
 
@@ -63,10 +63,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-6">
+      <div className="px-5 pt-14 pb-6 enter">
         <p className="text-zinc-600 text-xs tracking-widest uppercase mb-1">Welcome back</p>
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{user?.username}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{user?.username}</h1>
           {isLegend && (
             <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full">
               ⚡ Legend
@@ -75,8 +75,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="mx-5 mb-4">
-        <div className={`rounded-2xl border p-5 ${rank.bg}`}>
+      <div className="mx-5 mb-4 enter" style={{ '--i': 1 }}>
+        <div className={`rounded-[28px] border p-4 ${rank.bg}`}>
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Rank</p>
@@ -90,7 +90,7 @@ export default function Dashboard() {
 
           <div className="mb-4">
             <div className="h-1.5 rounded-full bg-black/40 overflow-hidden">
-              <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: `${progress}%` }} />
+              <div className="h-full rounded-full bg-amber-500 bar-fill" style={{ scale: `${progress / 100} 1` }} />
             </div>
             <p className="text-zinc-500 text-xs mt-2">
               {upcoming ? `${formatPoints(upcoming.min - seasonPoints)} pts to ${upcoming.name}` : 'Top rank reached'}
@@ -111,8 +111,8 @@ export default function Dashboard() {
       </div>
 
       <div className="px-5 flex flex-col gap-3">
-        <button onClick={() => router.push('/party')}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left active:scale-[0.98] transition-all">
+        <button onClick={() => router.push('/party')} style={{ '--i': 2 }}
+          className="enter w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left press">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">My Party</p>
@@ -131,8 +131,8 @@ export default function Dashboard() {
           )}
         </button>
 
-        <button onClick={() => router.push('/battles')}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left active:scale-[0.98] transition-all">
+        <button onClick={() => router.push('/battles')} style={{ '--i': 3 }}
+          className="enter w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-left press">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Battles</p>
@@ -147,15 +147,15 @@ export default function Dashboard() {
           </p>
         </button>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 enter" style={{ '--i': 4 }}>
           <button onClick={() => router.push('/leaderboard')}
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left active:scale-[0.98] transition-all">
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left press">
             <div className="text-2xl mb-2">🏆</div>
             <p className="text-white font-semibold text-sm">Leaderboard</p>
             <p className="text-zinc-600 text-xs mt-0.5">See who leads</p>
           </button>
           <button onClick={() => router.push('/rules')}
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left active:scale-[0.98] transition-all">
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-left press">
             <div className="text-2xl mb-2">📜</div>
             <p className="text-white font-semibold text-sm">How to play</p>
             <p className="text-zinc-600 text-xs mt-0.5">Slots, types, ranks</p>

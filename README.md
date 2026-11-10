@@ -5,7 +5,8 @@ they fight. Wins score points by slot, points climb you from Rookie to Legendary
 
 ## Parts
 
-- `webapp/` – Next.js app (Supabase auth + data). `npm run dev` inside it.
+- `webapp/` – Next.js app (Supabase auth + data). `npm run dev` inside it. Live at https://gyokanlegends.utilox.com:
+  a static export served by the Cloudflare Worker `gyokan-legends`; `npm run deploy` builds and ships it.
 - `pipeline/` – Python: `extract.py` pulls characters from AniList, `transform.py` gives them stats,
   power types and gold costs, `load.py` writes them to the database, `battle.py` runs a battle night.
 - `sql/` – `schema.sql` for a fresh database, `002_leaderboard.sql` to add the leaderboard to an existing one.

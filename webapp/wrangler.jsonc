@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/wrangler@4/config-schema.json",
+  "name": "gyokan-legends",
+  "compatibility_date": "2026-10-01",
+  // static export from `next build` (output: 'export'); no server code, data comes from Supabase in the browser
+  "assets": {
+    "directory": "./out",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [{ "pattern": "gyokanlegends.utilox.com", "custom_domain": true }],
+  "workers_dev": false
+}

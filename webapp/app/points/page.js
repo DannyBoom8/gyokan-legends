@@ -40,7 +40,7 @@ export default function Points() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm">Loading...</p>
+      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
     </div>
   )
 
@@ -49,21 +49,21 @@ export default function Points() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-6">
+      <div className="px-5 pt-14 pb-6 enter">
         <button onClick={() => router.push('/dashboard')} className="text-zinc-500 text-sm mb-3 block">
           ← Dashboard
         </button>
-        <h1 className="text-2xl font-bold">Points</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Points</h1>
       </div>
 
-      <div className="mx-5 mb-5 grid grid-cols-2 gap-3">
+      <div className="mx-5 mb-5 grid grid-cols-2 gap-3 enter" style={{ '--i': 1 }}>
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
           <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Season total</p>
-          <p className="text-white font-bold text-2xl">{seasonPoints}</p>
+          <p className="text-white font-bold text-2xl tabular-nums">{seasonPoints}</p>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
           <p className="text-zinc-500 text-xs uppercase tracking-wider mb-1">Last battle</p>
-          <p className="text-amber-400 font-bold text-2xl">{totalThisWeek}</p>
+          <p className="text-amber-400 font-bold text-2xl tabular-nums">{totalThisWeek}</p>
         </div>
       </div>
 
@@ -76,10 +76,10 @@ export default function Points() {
           </p>
         </div>
       ) : (
-        <div className="px-5 flex flex-col gap-2">
+        <div className="px-5 flex flex-col gap-2 enter" style={{ '--i': 2 }}>
           <p className="text-zinc-500 text-xs uppercase tracking-wider mb-2">Last battle night</p>
           {points.map(p => (
-            <div key={p.points_id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 flex items-center gap-3">
+            <div key={p.points_id} className="bg-zinc-900 border border-zinc-800 rounded-[24px] p-3 flex items-center gap-3">
               <img src={p.characters?.image_url} alt={p.characters?.name}
                 className="w-10 h-10 rounded-xl object-cover flex-shrink-0 bg-zinc-800" />
               <div className="flex-1 min-w-0">

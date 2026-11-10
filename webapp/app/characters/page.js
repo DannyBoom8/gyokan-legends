@@ -107,12 +107,12 @@ function CharactersContent() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-4">
+      <div className="px-5 pt-14 pb-4 enter">
         <div className="flex items-center gap-3 mb-1">
           {isSelecting && (
             <button onClick={() => router.push('/party')} className="text-zinc-500 text-sm">← Back</button>
           )}
-          <h1 className="text-2xl font-bold">Characters</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Characters</h1>
         </div>
         {isSelecting && (
           <p className="text-amber-500 text-sm">Selecting {slotType} — slot {slotPosition} · {formatGold(goldLeft)} gold left</p>
@@ -132,7 +132,7 @@ function CharactersContent() {
       <div className="px-5 mb-4 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
         {FILTERS.map(pt => (
           <button key={pt} onClick={() => setFilter(pt)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${filter === pt ? 'bg-amber-500 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 ${filter === pt ? 'bg-amber-500 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
             {pt}
           </button>
         ))}
@@ -140,7 +140,7 @@ function CharactersContent() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <p className="text-amber-500 text-sm">Loading...</p>
+          <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -159,9 +159,9 @@ function CharactersContent() {
               {characters.map(char => {
                 const alreadyIn = partyCharIds.includes(char.character_id)
                 return (
-                  <tr key={char.character_id} className={`border-b border-zinc-900 ${alreadyIn ? 'opacity-30' : 'hover:bg-zinc-900/40'}`}>
+                  <tr key={char.character_id} className={`border-b border-zinc-900 transition-colors duration-150 ${alreadyIn ? 'opacity-30' : 'hover:bg-zinc-900/40'}`}>
                     <td className="pl-5 pr-2 py-3">
-                      <button onClick={() => router.push(`/characters/${char.character_id}`)} className="flex items-center gap-3 text-left">
+                      <button onClick={() => router.push(`/character?id=${char.character_id}`)} className="press flex items-center gap-3 text-left">
                         <img src={char.image_url} alt={char.name}
                           className="w-10 h-10 rounded-xl object-cover flex-shrink-0 bg-zinc-800" />
                         <div className="min-w-0">
@@ -196,7 +196,7 @@ function CharactersContent() {
                           <button
                             onClick={() => addToParty(char)}
                             disabled={adding === char.character_id}
-                            className="bg-amber-500 text-black text-xs font-bold px-3 py-2 rounded-xl active:scale-95 disabled:opacity-50 transition-all whitespace-nowrap">
+                            className="bg-amber-500 text-black text-xs font-bold px-3 py-2 rounded-xl press disabled:opacity-50 whitespace-nowrap">
                             {adding === char.character_id ? '...' : 'Pick'}
                           </button>
                         )}
@@ -217,7 +217,7 @@ function CharactersContent() {
           {hasMore && (
             <div className="flex justify-center py-8">
               <button onClick={loadMore} disabled={loadingMore}
-                className="text-amber-500 text-sm border border-amber-500/30 px-6 py-2.5 rounded-full active:scale-95 disabled:opacity-50 transition-all">
+                className="text-amber-500 text-sm border border-amber-500/30 px-6 py-2.5 rounded-full press disabled:opacity-50">
                 {loadingMore ? 'Loading...' : 'Load more'}
               </button>
             </div>
@@ -234,7 +234,7 @@ export default function Characters() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-amber-500 text-sm">Loading...</p>
+        <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
       </div>
     }>
       <CharactersContent />

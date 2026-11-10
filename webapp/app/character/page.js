@@ -1,15 +1,16 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { supabase } from '../../../lib/supabase'
-import BottomNav from '../../../components/BottomNav'
-import { BEATS, POWER_BADGES, STATS, formatGold } from '../../../lib/game'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '../../lib/supabase'
+import BottomNav from '../../components/BottomNav'
+import { BEATS, POWER_BADGES, STATS, formatGold } from '../../lib/game'
 
 // PostgREST returns a one-to-one embed as an object, older setups as an array
 const one = (r) => Array.isArray(r) ? r[0] : r
 
-export default function CharacterProfile() {
-  const { id } = useParams()
+// a query param (not /characters/[id]) so the site can be a static export served by a Worker
+function CharacterProfile() {
+  const id = useSearchParams().get('id')
   const router = useRouter()
   const [char, setChar] = useState(null)
   const [fights, setFights] = useState([])
@@ -42,7 +43,7 @@ export default function CharacterProfile() {
 
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <p className="text-amber-500 text-sm">Loading...</p>
+      <p className="text-amber-500 text-sm fade-in-late">Loading...</p>
     </div>
   )
 
@@ -67,13 +68,13 @@ export default function CharacterProfile() {
       <div className="relative h-72 overflow-hidden">
         <img src={char.image_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black" />
-        <button onClick={() => router.back()} className="absolute top-12 left-5 text-zinc-300 text-sm bg-black/40 rounded-full px-3 py-1.5">
+        <button onClick={() => router.back()} className="press absolute top-12 left-5 text-zinc-200 text-sm bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5">
           ← Back
         </button>
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-4">
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-4 enter">
           <img src={char.image_url} alt={char.name} className="w-28 h-36 rounded-2xl object-cover border border-white/10 shadow-2xl bg-zinc-800" />
           <div className="min-w-0 pb-1">
-            <h1 className="text-2xl font-bold leading-tight">{char.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight leading-tight">{char.name}</h1>
             <p className="text-zinc-400 text-sm truncate">{char.anime_title}</p>
             {char.power_type && (
               <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full ${POWER_BADGES[char.power_type]}`}>{char.power_type}</span>
@@ -82,7 +83,7 @@ export default function CharacterProfile() {
         </div>
       </div>
 
-      <div className="mx-5 mt-4 grid grid-cols-3 gap-3">
+      <div className="mx-5 mt-4 grid grid-cols-3 gap-3 enter" style={{ '--i': 1 }}>
         {[
           ['Overall', char.overall ?? '—', 'text-white'],
           ['Cost', formatGold(char.gold_cost), 'text-amber-400'],
@@ -95,14 +96,14 @@ export default function CharacterProfile() {
         ))}
       </div>
 
-      <div className="mx-5 mt-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+      <div className="mx-5 mt-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-5 enter" style={{ '--i': 2 }}>
         <p className="text-zinc-500 text-xs uppercase tracking-wider mb-4">Stats</p>
         <div className="flex flex-col gap-3">
           {STATS.map(s => (
             <div key={s} className="flex items-center gap-3">
               <span className="text-zinc-400 text-xs w-20 capitalize">{s === 'iq' ? 'IQ' : s}</span>
               <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500 rounded-full" style={{ width: `${char[s] || 0}%` }} />
+                <div className="h-full bg-amber-500 rounded-full bar-fill" style={{ scale: `${(char[s] || 0) / 100} 1` }} />
               </div>
               <span className="text-white text-xs w-6 text-right tabular-nums">{char[s] ?? '—'}</span>
             </div>
@@ -115,7 +116,7 @@ export default function CharacterProfile() {
         )}
       </div>
 
-      <div className="mx-5 mt-4">
+      <div className="mx-5 mt-4 enter" style={{ '--i': 3 }}>
         <p className="text-zinc-500 text-xs uppercase tracking-wider mb-3">Recent battles</p>
         {fights.length === 0 ? (
           <p className="text-zinc-600 text-sm">No battles yet. The first one is on Thursday.</p>
@@ -125,8 +126,8 @@ export default function CharacterProfile() {
               const opp = fx.char_a?.character_id === cid ? fx.char_b : fx.char_a
               const o = outcome(fx)
               return (
-                <button key={fx.fixture_id} onClick={() => router.push(`/characters/${opp?.character_id}`)}
-                  className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 flex items-center gap-3 text-left">
+                <button key={fx.fixture_id} onClick={() => router.push(`/character?id=${opp?.character_id}`)}
+                  className="press bg-zinc-900 border border-zinc-800 rounded-[20px] p-3 flex items-center gap-3 text-left">
                   <span className={`w-7 text-center font-bold text-sm ${o === 'W' ? 'text-amber-400' : o === 'L' ? 'text-zinc-600' : 'text-zinc-400'}`}>{o}</span>
                   <img src={opp?.image_url} alt="" className="w-9 h-9 rounded-lg object-cover bg-zinc-800" />
                   <p className="flex-1 text-sm text-white truncate">vs {opp?.name}</p>
@@ -140,5 +141,13 @@ export default function CharacterProfile() {
 
       <BottomNav active="characters" />
     </div>
+  )
+}
+
+export default function CharacterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <CharacterProfile />
+    </Suspense>
   )
 }
