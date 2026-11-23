@@ -43,7 +43,7 @@ export default function GamePage({ game }) {
         <p className="text-zinc-500 text-sm mt-1 leading-relaxed">{game.blurb}</p>
       </div>
 
-      <div className="ux px-5 max-w-3xl mx-auto enter" data-theme="dark" style={{ '--i': 1 }}>
+      <div className="ux px-5 max-w-3xl mx-auto enter" style={{ '--i': 1 }}>
         {failed
           ? <p className="text-zinc-500 text-sm">This game couldn&apos;t load. Check your connection and refresh.</p>
           : <div ref={mount} className="ux-app" />}

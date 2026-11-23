@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { isDemo, runDemoBattle } from '../lib/demo'
 import Icon from './Icon'
+import ThemeToggle from './ThemeToggle'
 
 const noop = () => () => {}
 
@@ -82,6 +83,8 @@ export default function BottomNav({ active }) {
                 </button>
               ))}
               <div className="h-px bg-white/10 mx-3 my-1" />
+              <div className="px-2 py-1.5"><ThemeToggle /></div>
+              <div className="h-px bg-white/10 mx-3 my-1" />
               {demo && (
                 <button onClick={runBattle} disabled={battling}
                   className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] transition-colors duration-150 active:bg-white/10 disabled:opacity-50">
@@ -100,7 +103,7 @@ export default function BottomNav({ active }) {
       )}
 
       {demo && (
-        <p className="label fixed top-3 right-3 z-50 rounded-full bg-amber-500 text-black px-3 py-1.5 !text-[0.6875rem] pointer-events-none">Demo</p>
+        <p className="label fixed top-3 right-3 z-50 rounded-full bg-amber-500 text-on-accent px-3 py-1.5 !text-[0.6875rem] pointer-events-none">Demo</p>
       )}
       <nav className="material fixed bottom-0 left-0 right-0 z-50 bg-black/70 backdrop-blur-xl backdrop-saturate-150 border-t border-white/[0.06]">
         <div className="flex items-center pb-safe">

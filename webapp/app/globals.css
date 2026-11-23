@@ -2,33 +2,11 @@
 
 @theme {
   --font-display: var(--font-display-face), var(--font-geist), system-ui, sans-serif;
-  /* Palette from the Gyokan logo: black, white, one warm orange, grey. Components keep using
-     the zinc and amber names; only the values change here. */
-  --color-zinc-50: oklch(0.985 0 0);
-  --color-zinc-100: oklch(0.97 0 0);
-  --color-zinc-200: oklch(0.922 0 0);
-  --color-zinc-300: oklch(0.87 0 0);
-  --color-zinc-400: oklch(0.708 0 0);
-  /* lifted so secondary text passes 4.5:1 on black AND on zinc-900 cards */
-  --color-zinc-500: oklch(0.7 0 0);
-  --color-zinc-600: oklch(0.556 0 0);
-  --color-zinc-700: oklch(0.371 0 0);
-  --color-zinc-800: oklch(0.269 0 0);
-  --color-zinc-900: oklch(0.205 0 0);
-  --color-zinc-950: oklch(0.145 0 0);
+  /* zinc-500 lifted so secondary text passes 4.5:1 on black AND on zinc-900 cards */
+  --color-zinc-500: oklch(0.7 0.012 286);
 
-  /* logo stripe orange (#f78f15), hue held at 62.5 across the ramp */
-  --color-amber-50: oklch(0.985 0.008 62.5);
-  --color-amber-100: oklch(0.955 0.028 62.5);
-  --color-amber-200: oklch(0.915 0.056 62.5);
-  --color-amber-300: oklch(0.865 0.092 62.5);
-  --color-amber-400: oklch(0.82 0.127 62.5);
-  --color-amber-500: oklch(0.757 0.172 62.5);
-  --color-amber-600: oklch(0.66 0.15 62.5);
-  --color-amber-700: oklch(0.55 0.126 62.5);
-  --color-amber-800: oklch(0.46 0.105 62.5);
-  --color-amber-900: oklch(0.39 0.09 62.5);
-  --color-amber-950: oklch(0.27 0.06 62.5);
+  /* text on an orange fill is always black, in both themes */
+  --color-on-accent: #000;
 }
 
 :root {
@@ -42,6 +20,11 @@
 
 html {
   color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-black);
+  color: var(--color-white);
 }
 
 body {
@@ -175,7 +158,7 @@ img:not([aria-hidden]) {
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: oklch(0.27 0.005 286);
+  background: var(--color-zinc-800);
   border-radius: 12px;
 }
 .skeleton::after {
@@ -257,7 +240,42 @@ img:not([aria-hidden]) {
 
 @media (prefers-reduced-transparency: reduce) {
   .material {
-    background-color: rgb(9 9 11) !important;
+    background-color: var(--color-zinc-950) !important;
     backdrop-filter: none !important;
   }
 }
+
+/* Light theme. Dark is the default above; the inline script in layout.js sets data-theme on <html>
+   (light, dark, or whichever the device prefers when the mode is Auto).
+   Components keep their zinc / black / white class names: the ramp is flipped here, so
+   black is the page and white is the ink. Orange text steps down to a darker orange for contrast. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-black: oklch(1 0 0);
+  --color-white: oklch(0.141 0.005 286);
+  --color-zinc-50: oklch(0.141 0.005 286);
+  --color-zinc-100: oklch(0.21 0.006 286);
+  --color-zinc-200: oklch(0.274 0.006 286);
+  --color-zinc-300: oklch(0.37 0.013 286);
+  --color-zinc-400: oklch(0.5 0.016 286);
+  --color-zinc-500: oklch(0.45 0.014 286);
+  --color-zinc-600: oklch(0.705 0.015 286);
+  --color-zinc-700: oklch(0.871 0.006 286);
+  --color-zinc-800: oklch(0.92 0.004 286);
+  --color-zinc-900: oklch(0.967 0.001 286);
+  --color-zinc-950: oklch(0.985 0 0);
+  --color-amber-400: oklch(0.555 0.163 48.4);
+  --color-red-400: oklch(0.505 0.213 27.5);
+  --color-green-400: oklch(0.527 0.154 150);
+  --color-blue-400: oklch(0.488 0.243 264);
+  --color-purple-400: oklch(0.496 0.265 301);
+  --color-orange-400: oklch(0.553 0.195 38);
+  --color-yellow-400: oklch(0.554 0.135 66);
+  --color-pink-400: oklch(0.525 0.223 3.9);
+}
+:root[data-theme="light"] .text-amber-500 { color: oklch(0.555 0.163 48.4); }
+:root[data-theme="light"] .skeleton::after { background: linear-gradient(100deg, transparent 20%, oklch(1 0 0 / 0.7) 50%, transparent 80%); }
+:root[data-theme="light"] .scrim { background-color: oklch(0.145 0 0 / 0.35); }
+
+/* theme switch: no colour transitions while everything repaints at once */
+.theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }

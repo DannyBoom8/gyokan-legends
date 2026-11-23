@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import Icon from '../components/Icon'
 import { Sk } from '../components/Skeleton'
 import { startDemo } from '../lib/demo'
+import ThemeToggle from '../components/ThemeToggle'
 
 const OFFLINE = "Can't reach the Gyokan servers right now. Try again in a moment."
 // supabase reports network failures as a retryable fetch error with status 0
@@ -88,7 +89,7 @@ export default function LandingPage() {
         <div className="flex bg-zinc-900 rounded-2xl p-1 mb-6 enter" style={{ '--i': 2 }}>
           {['login', 'signup'].map(t => (
             <button key={t} onClick={() => { setTab(t); setError('') }}
-              className={`label !text-[0.8125rem] flex-1 py-3.5 rounded-xl transition-colors duration-150 ${tab === t ? 'bg-amber-500 text-black' : 'text-zinc-500'}`}>
+              className={`label !text-[0.8125rem] flex-1 py-3.5 rounded-xl transition-colors duration-150 ${tab === t ? 'bg-amber-500 text-on-accent' : 'text-zinc-500'}`}>
               {t === 'login' ? 'Login' : 'Sign up'}
             </button>
           ))}
@@ -116,7 +117,7 @@ export default function LandingPage() {
           <button
             onClick={tab === 'login' ? handleLogin : handleSignup}
             disabled={loading}
-            className="display w-full bg-amber-500 text-black rounded-2xl py-4 text-base !tracking-[0.06em] press disabled:opacity-50 mt-1">
+            className="display w-full bg-amber-500 text-on-accent rounded-2xl py-4 text-base !tracking-[0.06em] press disabled:opacity-50 mt-1">
             {loading ? 'Please wait…' : tab === 'login' ? 'Enter the Arena' : 'Join Gyokan Legends'}
           </button>
         </div>
@@ -140,7 +141,8 @@ export default function LandingPage() {
           </span>
           <Icon name="arrow" size={20} className="text-amber-500 transition-transform duration-200 group-active:translate-x-0.5" />
         </button>
-        <p className="label text-zinc-500 text-center mt-10">A Gyokan product</p>
+        <ThemeToggle className="mt-8" />
+        <p className="label text-zinc-500 text-center mt-8">A Gyokan product</p>
       </div>
     </div>
   )

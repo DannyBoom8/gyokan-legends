@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 out = sys.argv[1]
 S = 2
 W, H = 1200 * S, 630 * S
-AMBER = (251, 147, 8)
+AMBER = (245, 158, 11)
 F = "C:/Windows/Fonts/"
 
 
@@ -37,11 +37,11 @@ def centered(text, y, f, fill, spacing=0):
 
 centered("GYOKAN", 58 * S, font("seguibl.ttf", 112), AMBER, -2)
 centered("LEGENDS", 205 * S, font("segoeui.ttf", 24), (212, 212, 216), 16)
-centered("Anime games to play solo or with friends", 250 * S, font("segoeui.ttf", 27), (176, 176, 176))
+centered("Anime games to play solo or with friends", 250 * S, font("segoeui.ttf", 27), (161, 161, 170))
 
 # game tiles
 games = [
-    ("star", "Legends", (251, 147, 8)),
+    ("star", "Legends", (245, 158, 11)),
     ("letters", "Hangu-Manu", (96, 165, 250)),
     ("mask", "Imposter", (248, 113, 113)),
     ("faces", "Charades", (192, 132, 252)),
@@ -85,7 +85,7 @@ for i, (icon, name, color) in enumerate(games):
     x = x0 + i * (tw + gap)
     tile = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
     td = ImageDraw.Draw(tile)
-    td.rounded_rectangle((0, 0, tw - 1, th - 1), radius=r, fill=(23, 23, 23, 255))
+    td.rounded_rectangle((0, 0, tw - 1, th - 1), radius=r, fill=(24, 24, 27, 255))
     # coloured glow inside the top of the tile
     glow = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
     ImageDraw.Draw(glow).ellipse((-tw // 3, -th // 2, tw + tw // 3, th // 2), fill=color + (70,))

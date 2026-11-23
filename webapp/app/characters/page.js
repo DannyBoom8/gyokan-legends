@@ -134,7 +134,7 @@ function CharactersContent() {
       <div className="px-5 mb-4 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
         {FILTERS.map(pt => (
           <button key={pt} onClick={() => setFilter(pt)}
-            className={`label flex-shrink-0 px-3.5 py-2 rounded-full transition-colors duration-150 ${filter === pt ? 'bg-amber-500 text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
+            className={`label flex-shrink-0 px-3.5 py-2 rounded-full transition-colors duration-150 ${filter === pt ? 'bg-amber-500 text-on-accent' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'}`}>
             {pt}
           </button>
         ))}
@@ -198,7 +198,7 @@ function CharactersContent() {
                           <button
                             onClick={() => addToParty(char)}
                             disabled={adding === char.character_id}
-                            className="bg-amber-500 text-black text-xs font-bold px-3 py-2 rounded-xl press disabled:opacity-50 whitespace-nowrap">
+                            className="bg-amber-500 text-on-accent text-xs font-bold px-3 py-2 rounded-xl press disabled:opacity-50 whitespace-nowrap">
                             {adding === char.character_id ? '...' : 'Pick'}
                           </button>
                         )}
