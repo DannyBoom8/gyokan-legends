@@ -1,5 +1,5 @@
 -- Full schema for a fresh Supabase project, matching what the web app and pipeline use.
--- Fresh project: run this file, then 002_leaderboard.sql. Existing database: run only 002_leaderboard.sql.
+-- Fresh project: run this file, then 002_leaderboard.sql and 003_harden.sql. Existing database: run only 002_leaderboard.sql.
 
 CREATE TABLE characters (
     character_id        INT PRIMARY KEY,           -- AniList id
@@ -127,9 +127,7 @@ CREATE POLICY "public read" ON fixtures   FOR SELECT USING (true);
 CREATE POLICY "public read" ON results    FOR SELECT USING (true);
 CREATE POLICY "public read" ON users      FOR SELECT USING (true);  -- usernames only, for "username taken"
 
-CREATE POLICY "own profile"  ON users          FOR INSERT WITH CHECK (id = auth.uid());
 CREATE POLICY "own rank"     ON user_ranks     FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "own rank add" ON user_ranks     FOR INSERT WITH CHECK (user_id = auth.uid());
 CREATE POLICY "own points"   ON fantasy_points FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "own party"    ON parties        FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE POLICY "own slots"    ON party_slots    FOR ALL

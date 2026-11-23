@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import Icon from '../components/Icon'
 import { Sk } from '../components/Skeleton'
+import { startDemo } from '../lib/demo'
 
 const OFFLINE = "Can't reach the Gyokan servers right now. Try again in a moment."
 // supabase reports network failures as a retryable fetch error with status 0
@@ -41,9 +42,8 @@ export default function LandingPage() {
 
   const handleSignup = async () => {
     if (!username.trim() || !password) return setError('Fill in all fields')
-    if (username.trim().length < 3) return setError('Username: minimum 3 characters')
-    if (password.length < 5) return setError('Password: minimum 5 characters')
-    if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) return setError('Username: letters, numbers and underscores only')
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username.trim())) return setError('Username: 3 to 20 letters, numbers or underscores')
+    if (password.length < 8) return setError('Password: minimum 8 characters')
     setLoading(true)
     setError('')
 
@@ -61,13 +61,9 @@ export default function LandingPage() {
       options: { data: { username: username.trim() } },
     })
 
-    if (error) { setError(isOffline(error) ? OFFLINE : error.message); setLoading(false); return }
-
-    if (data.user) {
-      await supabase.from('users').insert({ id: data.user.id, username: username.trim() })
-      await supabase.from('user_ranks').insert({ user_id: data.user.id })
-      router.push('/dashboard')
-    }
+    // the database trigger creates the profile and rank rows; it rejects a taken or invalid username
+    if (error) { setError(isOffline(error) ? OFFLINE : /database error/i.test(error.message) ? 'Username already taken' : error.message); setLoading(false); return }
+    if (data.user) router.push('/dashboard')
   }
 
   if (checking) return (
@@ -127,12 +123,17 @@ export default function LandingPage() {
 
         {tab === 'signup' && (
           <p className="text-zinc-500 text-sm text-center mt-4">
-            Username min 3 chars · Password min 5 chars
+            Username 3 to 20 chars · Password min 8 chars
           </p>
         )}
+        <button onClick={startDemo}
+          className="label press enter w-full mt-4 rounded-2xl border border-amber-500/40 text-amber-500 py-3.5 !text-[0.8125rem]"
+          style={{ '--i': 4 }}>
+          Try the demo
+        </button>
         <button onClick={() => router.push('/games')}
           className="group press enter w-full mt-8 rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3.5 flex items-center justify-between text-left"
-          style={{ '--i': 4 }}>
+          style={{ '--i': 5 }}>
           <span>
             <span className="display block text-base">Play free anime games</span>
             <span className="block text-zinc-500 text-sm mt-1">Hangman, Imposter, Charades and more. No account needed.</span>

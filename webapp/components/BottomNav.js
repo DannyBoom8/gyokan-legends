@@ -1,12 +1,18 @@
 'use client'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
+import { isDemo, runDemoBattle } from '../lib/demo'
 import Icon from './Icon'
+
+const noop = () => () => {}
 
 export default function BottomNav({ active }) {
   const [showMore, setShowMore] = useState(false)
   const router = useRouter()
+  const demo = useSyncExternalStore(noop, isDemo, () => false)
+  const [battling, setBattling] = useState(false)
+  const runBattle = async () => { setBattling(true); await runDemoBattle(); window.location.reload() }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -76,16 +82,26 @@ export default function BottomNav({ active }) {
                 </button>
               ))}
               <div className="h-px bg-white/10 mx-3 my-1" />
+              {demo && (
+                <button onClick={runBattle} disabled={battling}
+                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] transition-colors duration-150 active:bg-white/10 disabled:opacity-50">
+                  <Icon name="swords" size={20} className="icon-in text-amber-500" style={{ '--i': 4 }} />
+                  <span className="text-white text-sm">{battling ? 'Battling…' : 'Run a battle night'}</span>
+                </button>
+              )}
               <button onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] transition-colors duration-150 active:bg-white/10">
                 <Icon name="logout" size={20} className="icon-in text-red-400" style={{ '--i': 4 }} />
-                <span className="text-red-400 text-sm font-medium">Log Out</span>
+                <span className="text-red-400 text-sm font-medium">{demo ? 'Exit demo' : 'Log Out'}</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
+      {demo && (
+        <p className="label fixed top-3 right-3 z-50 rounded-full bg-amber-500 text-black px-3 py-1.5 !text-[0.6875rem] pointer-events-none">Demo</p>
+      )}
       <nav className="material fixed bottom-0 left-0 right-0 z-50 bg-black/70 backdrop-blur-xl backdrop-saturate-150 border-t border-white/[0.06]">
         <div className="flex items-center pb-safe">
           {tabs.map(tab => {

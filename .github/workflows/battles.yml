@@ -3,6 +3,9 @@ on:
   schedule:
     - cron: "0 19 * * 4"   # every Thursday 19:00 UTC
   workflow_dispatch:        # "Run workflow" button for a manual battle night
+permissions:
+  contents: read            # the job only reads the repo; the database secret is its only write access
+concurrency: battles         # never run two battle nights at once
 jobs:
   battle:
     runs-on: ubuntu-latest
