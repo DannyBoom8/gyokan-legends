@@ -21,13 +21,6 @@ export const GAMES = [
     icon: 'theater',
     blurb: 'Act out anime characters against the clock while your friends guess.',
   },
-  {
-    slug: 'tic-tac-toe-game',
-    title: 'Category Tic Tac Toe',
-    tag: '2 players',
-    icon: 'grid',
-    blurb: 'Tic tac toe with a twist: claim a square by naming something that fits its row and column.',
-  },
 ]
 
 export const gameBySlug = (slug) => GAMES.find(g => g.slug === slug)

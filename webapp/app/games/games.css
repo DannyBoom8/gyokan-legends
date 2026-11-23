@@ -155,27 +155,10 @@
 .ux .cha-stage{display:flex;flex-direction:column;align-items:center;gap:10px;padding:26px 12px;background:var(--alt);border-radius:12px;text-align:center}
 .ux .cha-clock{font:700 56px 'Lexend',sans-serif;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums}.ux .cha-clock.is-low{color:#B3261E}
 .ux .cha-name{font:700 clamp(28px,5vw,44px) 'Lexend',sans-serif;color:var(--ink);min-height:1.3em}
-.ux .ttt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-width:560px;margin:0 auto;width:100%}
-.ux .ttt-cell,.ux .ttt-head,.ux .ttt-corner{aspect-ratio:1;border-radius:8px}
-.ux .ttt-cell{border:.8px solid var(--field-line);background:var(--bg);font:700 clamp(32px,9vw,64px) 'Lexend',sans-serif;cursor:pointer;color:var(--ink);transition:background-color .2s ease,scale .12s var(--ease-out)}
-.ux .ttt-cell:active:not(.is-X):not(.is-O){scale:.95}
-@media (hover:hover) and (pointer:fine){.ux .ttt-cell:hover{background:var(--alt)}}
-.ux .ttt-cell.is-X{color:#D13B2E}.ux .ttt-cell.is-O{color:#2D5BD6}.ux .ttt-cell.is-win{background:#FFF1B8;box-shadow:inset 0 0 0 3px #E0B400}
-.ux .ttt-head{position:relative;background:var(--alt) center/cover no-repeat;display:flex;align-items:flex-end;overflow:hidden}
-.ux .ttt-in{width:100%;border:0;background:rgba(255,255,255,.85);color:#111;padding:6px;font:600 13px 'DM Sans',sans-serif;text-align:center;min-width:0}
-.ux .ttt-head.has-img .ttt-in{background:rgba(255,255,255,.7)}
-.ux .ttt-pic{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:6px;border:0;background:rgba(255,255,255,.85);cursor:pointer;font-size:14px}
-.ux .ttt-status{margin:0;text-align:center;font:600 20px 'Lexend',sans-serif;color:var(--ink)}
 .ux .game .app-hint{text-align:center}
 
 /* Gyokan dark theme for game states (the Utilox originals are tuned for light pages) */
 .ux .game-msg.is-win{color:#4ade80}.ux .game-msg.is-lose{color:#f87171}
 .ux .hang-k.is-ok{background:rgb(74 222 128 / .15);color:#4ade80;border-color:rgb(74 222 128 / .4)}
 .ux .hang-k.is-bad{background:rgb(248 113 113 / .12);color:#f87171;border-color:rgb(248 113 113 / .35)}
-.ux .ttt-cell.is-X{color:#f87171}.ux .ttt-cell.is-O{color:#60a5fa}
-.ux .ttt-cell.is-win{background:rgb(245 158 11 / .15);box-shadow:inset 0 0 0 3px #f59e0b}
 .ux .imp-face.back{background:#1c1003;color:#fef3c7}.ux .imp-face.back.is-imp{background:#7f1d1d}
-.ux .ttt-in{background:rgb(0 0 0 / .55);color:#fafafa}.ux .ttt-in::placeholder{color:#a1a1aa}
-.ux .ttt-head.has-img .ttt-in{background:rgb(0 0 0 / .6)}
-.ux .ttt-pic{background:rgb(0 0 0 / .55);color:#fafafa}
-@media (hover:none){.ux .ttt-cell:hover{background:var(--bg)}}

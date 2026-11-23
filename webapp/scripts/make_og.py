@@ -45,7 +45,6 @@ games = [
     ("letters", "Hangu-Manu", (96, 165, 250)),
     ("mask", "Imposter", (248, 113, 113)),
     ("faces", "Charades", (192, 132, 252)),
-    ("grid", "Tic Tac Toe", (74, 222, 128)),
 ]
 tw, th, gap, r = 176 * S, 176 * S, 22 * S, 36 * S
 x0 = (W - (len(games) * tw + (len(games) - 1) * gap)) // 2
@@ -78,13 +77,7 @@ def draw_icon(td, kind, cx, cy, color):
         td.ellipse((cx - 3 * u, cy - 3 * u, cx + 12 * u, cy + 12 * u), outline=c, width=w)
         td.arc((cx + 0 * u, cy + 3 * u, cx + 9 * u, cy + 9 * u), 20, 160, fill=c, width=w)
         td.arc((cx - 9 * u, cy - 2 * u, cx - 0 * u, cy + 3 * u), 200, 340, fill=c, width=w)
-    elif kind == "grid":
-        for k in (-3, 3):
-            td.line((cx + k * u, cy - 11 * u, cx + k * u, cy + 11 * u), fill=c, width=w)
-            td.line((cx - 11 * u, cy + k * u, cx + 11 * u, cy + k * u), fill=c, width=w)
-        td.ellipse((cx - 9.5 * u, cy - 9.5 * u, cx - 5 * u, cy - 5 * u), outline=c, width=w)
-        td.line((cx + 5.2 * u, cy + 5.2 * u, cx + 9.8 * u, cy + 9.8 * u), fill=c, width=w)
-        td.line((cx + 9.8 * u, cy + 5.2 * u, cx + 5.2 * u, cy + 9.8 * u), fill=c, width=w)
+
 
 
 label = font("seguisb.ttf", 19)

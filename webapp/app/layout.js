@@ -5,7 +5,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const display = Chakra_Petch({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display-face" });
 
 const description =
-  "Free anime games. Draft legends for weekly battles, or play Hangu-Manu, Anime Imposter, Anime Charades and Category Tic Tac Toe with friends. Nothing to download.";
+  "Free anime games. Draft legends for weekly battles, or play Hangu-Manu, Anime Imposter and Anime Charades with friends. Nothing to download.";
 const shareTitle = "Gyokan Legends — Anime games to play solo or with friends";
 
 export const metadata = {
@@ -17,14 +17,14 @@ export const metadata = {
     description,
     url: "/",
     siteName: "Gyokan Legends",
-    images: [{ url: "/og.png?v=4", width: 1200, height: 630, alt: "Gyokan Legends logo above five game tiles: Legends, Hangu-Manu, Imposter, Charades and Tic Tac Toe" }],
+    images: [{ url: "/og.png?v=5", width: 1200, height: 630, alt: "Gyokan Legends logo above five game tiles: Legends, Hangu-Manu, Imposter and Charades" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: shareTitle,
     description,
-    images: ["/og.png?v=4"],
+    images: ["/og.png?v=5"],
   },
 };
 

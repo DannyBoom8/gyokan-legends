@@ -297,42 +297,6 @@
       h("div", { class: "app-actions" }, [startBtn, gotBtn, nextBtn, stopBtn]), h("p", { class: "app-hint", text: "Act out the character without speaking or writing. Press “Got it” when your team guesses, or “Skip” to move on." })]));
   };
 
-  // ---------------------------------------------------------------- Category Tic Tac Toe
-  U.tools["tic-tac-toe-game"] = function (root) {
-    var turn = "X", cells = [], board = [], over = false, score = { X: 0, O: 0, D: 0 }, heads = [], status = h("p", { class: "ttt-status" }), scoreEl = h("p", { class: "app-hint" });
-    var grid = h("div", { class: "ttt" });
-    var WINS = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
-    function head(kind, i) {
-      var el = h("div", { class: "ttt-head " + kind }), inp = h("input", { type: "text", class: "ttt-in", placeholder: kind === "col" ? "Column " + (i + 1) : "Row " + (i + 1), "aria-label": (kind === "col" ? "Column " : "Row ") + (i + 1) + " category" });
-      var file = h("input", { type: "file", accept: "image/*", style: "display:none" }), pic = h("button", { type: "button", class: "ttt-pic", "aria-label": "Add a picture", text: "🖼" });
-      pic.addEventListener("click", function () { file.click(); });
-      file.addEventListener("change", function () { var f = file.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { el.style.backgroundImage = "url(" + r.result + ")"; el.classList.add("has-img"); }; r.readAsDataURL(f); });
-      el.appendChild(inp); el.appendChild(pic); el.appendChild(file); heads.push({ el: el, inp: inp, file: file }); return el;
-    }
-    function build() {
-      grid.innerHTML = ""; cells = []; heads = []; board = Array(9).fill(""); over = false; turn = "X";
-      grid.appendChild(h("div", { class: "ttt-corner" }));
-      for (var c = 0; c < 3; c++) grid.appendChild(head("col", c));
-      for (var r = 0; r < 3; r++) {
-        grid.appendChild(head("row", r));
-        for (var c2 = 0; c2 < 3; c2++) (function (i) { var b = h("button", { type: "button", class: "ttt-cell", "aria-label": "Square " + (i + 1), onclick: function () { play(i); } }); cells.push(b); grid.appendChild(b); })(r * 3 + c2);
-      }
-      msg();
-    }
-    function msg(t) { status.textContent = t || ("Player " + turn + "’s turn"); scoreEl.textContent = "X wins: " + score.X + "   ·   O wins: " + score.O + "   ·   Draws: " + score.D; }
-    function reset() { board = Array(9).fill(""); over = false; turn = "X"; cells.forEach(function (c) { c.textContent = ""; c.className = "ttt-cell"; c.disabled = false; }); msg(); }
-    function play(i) {
-      if (over || board[i]) return; board[i] = turn; cells[i].textContent = turn; cells[i].classList.add("is-" + turn);
-      var w = WINS.filter(function (l) { return board[l[0]] && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]; })[0];
-      if (w) { over = true; score[turn]++; w.forEach(function (k) { cells[k].classList.add("is-win"); }); msg("Player " + turn + " wins!"); return; }
-      if (board.every(Boolean)) { over = true; score.D++; msg("It’s a draw."); return; }
-      turn = turn === "X" ? "O" : "X"; msg();
-    }
-    root.appendChild(h("div", { class: "app-box game" }, [h("p", { class: "app-hint", text: "Type a word or add a picture for each row and column. A player claims a square by answering for both its row and its column." }), grid, status, scoreEl,
-      h("div", { class: "app-actions" }, [u.btn("New round", reset, "primary"), u.btn("Clear categories", function () { heads.forEach(function (x) { x.inp.value = ""; x.el.style.backgroundImage = ""; x.el.classList.remove("has-img"); }); reset(); }, "ghost"), u.btn("Reset scores", function () { score = { X: 0, O: 0, D: 0 }; reset(); }, "ghost")])]));
-    build();
-  };
-
   // ---------------------------------------------------------------- start-up
   function boot() {
     var mount = u.$("[data-app]");
