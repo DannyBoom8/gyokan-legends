@@ -2,8 +2,33 @@
 
 @theme {
   --font-display: var(--font-display-face), var(--font-geist), system-ui, sans-serif;
-  /* zinc-500 lifted so secondary text passes 4.5:1 on black AND on zinc-900 cards */
-  --color-zinc-500: oklch(0.7 0.012 286);
+  /* Palette from the Gyokan logo: black, white, one warm orange, grey. Components keep using
+     the zinc and amber names; only the values change here. */
+  --color-zinc-50: oklch(0.985 0 0);
+  --color-zinc-100: oklch(0.97 0 0);
+  --color-zinc-200: oklch(0.922 0 0);
+  --color-zinc-300: oklch(0.87 0 0);
+  --color-zinc-400: oklch(0.708 0 0);
+  /* lifted so secondary text passes 4.5:1 on black AND on zinc-900 cards */
+  --color-zinc-500: oklch(0.7 0 0);
+  --color-zinc-600: oklch(0.556 0 0);
+  --color-zinc-700: oklch(0.371 0 0);
+  --color-zinc-800: oklch(0.269 0 0);
+  --color-zinc-900: oklch(0.205 0 0);
+  --color-zinc-950: oklch(0.145 0 0);
+
+  /* logo stripe orange (#f78f15), hue held at 62.5 across the ramp */
+  --color-amber-50: oklch(0.985 0.008 62.5);
+  --color-amber-100: oklch(0.955 0.028 62.5);
+  --color-amber-200: oklch(0.915 0.056 62.5);
+  --color-amber-300: oklch(0.865 0.092 62.5);
+  --color-amber-400: oklch(0.82 0.127 62.5);
+  --color-amber-500: oklch(0.757 0.172 62.5);
+  --color-amber-600: oklch(0.66 0.15 62.5);
+  --color-amber-700: oklch(0.55 0.126 62.5);
+  --color-amber-800: oklch(0.46 0.105 62.5);
+  --color-amber-900: oklch(0.39 0.09 62.5);
+  --color-amber-950: oklch(0.27 0.06 62.5);
 }
 
 :root {

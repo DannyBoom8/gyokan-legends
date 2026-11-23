@@ -2,9 +2,9 @@
 @font-face{font-family:'DM Sans';src:url('/fonts/dm-sans-latin.woff2') format('woff2');font-weight:100 1000;font-display:swap}
 @font-face{font-family:'Lexend';src:url('/fonts/lexend-latin.woff2') format('woff2');font-weight:100 900;font-display:swap}
 .ux{
-  --bg:#09090b;--alt:#18181b;--border:#27272a;--field-line:#3f3f46;
-  --ink:#fafafa;--muted:#a1a1aa;--subtle:#71717a;--ph:#52525b;
-  --btn:#f59e0b;--btn-fg:#000;--btn-hover:#fbbf24;
+  --bg:#0a0a0a;--alt:#171717;--border:#262626;--field-line:#404040;
+  --ink:#fafafa;--muted:#b0b0b0;--subtle:#737373;--ph:#525252;
+  --btn:#fb9308;--btn-fg:#000;--btn-hover:#feb169;
   color:var(--ink);
 }
 /* Utilox free tools: styles (uses the site's colour variables, so light and dark both work) */
@@ -161,4 +161,4 @@
 .ux .game-msg.is-win{color:#4ade80}.ux .game-msg.is-lose{color:#f87171}
 .ux .hang-k.is-ok{background:rgb(74 222 128 / .15);color:#4ade80;border-color:rgb(74 222 128 / .4)}
 .ux .hang-k.is-bad{background:rgb(248 113 113 / .12);color:#f87171;border-color:rgb(248 113 113 / .35)}
-.ux .imp-face.back{background:#1c1003;color:#fef3c7}.ux .imp-face.back.is-imp{background:#7f1d1d}
+.ux .imp-face.back{background:#1a1004;color:#ffeddd}.ux .imp-face.back.is-imp{background:#7f1d1d}
