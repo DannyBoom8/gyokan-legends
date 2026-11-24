@@ -114,9 +114,9 @@ export default function Battles() {
   const myWins = myFixtures.filter(f => mine.has(one(f.results)?.winner_id)).length
 
   return (
-    <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-6 enter">
-        <h1 className="display text-3xl">Battles</h1>
+    <div className="min-h-screen bg-black text-white pb-28 md:pb-12"><div className="md:max-w-6xl md:mx-auto">
+      <div className="px-5 md:px-8 pt-14 pb-6 enter">
+        <h1 className="display text-3xl md:text-4xl uppercase">Battles</h1>
         <p className="text-zinc-500 text-sm mt-1">
           {gameweek
             ? `Gameweek ${gameweek.gameweek_number} · ${new Date(gameweek.battle_date).toDateString()}`
@@ -140,10 +140,10 @@ export default function Battles() {
           </div>
         </div>
       ) : (
-        <div className="px-5 flex flex-col gap-3 enter" style={{ '--i': 1 }}>
+        <div className="px-5 md:px-8 grid gap-3 md:grid-cols-2 xl:grid-cols-3 enter" style={{ '--i': 1 }}>
           {myFixtures.length > 0 && (
             <>
-              <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline justify-between md:col-span-full">
                 <p className="label text-amber-500">Your fighters</p>
                 <p className="label text-zinc-500 !tracking-[0.08em]">{myWins} / {myFixtures.length} won</p>
               </div>
@@ -157,11 +157,12 @@ export default function Battles() {
               <p className="text-zinc-500 text-sm mt-1">Build your party before Thursday to score</p>
             </button>
           )}
-          <p className="text-zinc-500 label mt-3">Around the arena</p>
+          <p className="text-zinc-500 label mt-3 md:col-span-full">Around the arena</p>
           {otherFixtures.map((f, i) => <Fixture key={f.fixture_id} index={i} fixture={f} mine={mine} onOpen={open} />)}
         </div>
       )}
 
+      </div>
       <BottomNav active="battles" />
     </div>
   )

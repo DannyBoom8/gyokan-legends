@@ -4,7 +4,7 @@
 import { BUDGET, SLOT_DEFS, DRAW_POINTS, MEDIC_BOOST, BEATS } from './game'
 
 const FLAG = 'gyokan-demo'
-const STORE = 'gyokan-demo-db-v1'
+const STORE = 'gyokan-demo-db-v2'
 const ME = 'demo-player'
 const RANKS = [[500, 'Legendary'], [350, 'Sovereign'], [220, 'Warlord'], [110, 'Veteran'], [40, 'Ronin'], [0, 'Rookie']]
 const SLOT_POINTS = Object.fromEntries(SLOT_DEFS.map(d => [d.type, d.points]))

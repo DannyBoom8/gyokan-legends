@@ -9,7 +9,7 @@ const description =
 const shareTitle = "Gyokan Legends — Anime games to play solo or with friends";
 
 export const metadata = {
-  metadataBase: new URL("https://gyokanlegends.utilox.com"),
+  metadataBase: new URL("https://legends.utilox.com"),
   title: "Gyokan Legends",
   description,
   openGraph: {
@@ -17,14 +17,14 @@ export const metadata = {
     description,
     url: "/",
     siteName: "Gyokan Legends",
-    images: [{ url: "/og.png?v=7", width: 1200, height: 630, alt: "Gyokan Legends logo above five game tiles: Legends, Hangu-Manu, Imposter and Charades" }],
+    images: [{ url: "/og.png?v=8", width: 1200, height: 630, alt: "Gyokan Legends logo above five game tiles: Legends, Hangu-Manu, Imposter and Charades" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: shareTitle,
     description,
-    images: ["/og.png?v=7"],
+    images: ["/og.png?v=8"],
   },
 };
 

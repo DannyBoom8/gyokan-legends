@@ -1,5 +1,5 @@
 """Run: python scripts/make_og.py public/og.png (needs Windows fonts).
-Share image for gyokanlegends.utilox.com, 1200x630: the Gyokan platform and its games.
+Share image for legends.utilox.com, 1200x630: the Gyokan platform and its games.
 Drawn at 2x then downsampled. No studio character art."""
 import math
 import sys
@@ -104,7 +104,7 @@ for i, (icon, name, color) in enumerate(games):
     img.alpha_composite(sh.filter(ImageFilter.GaussianBlur(16 * S)))
     img.alpha_composite(tile, (x, y0))
 
-centered("gyokanlegends.utilox.com", 560 * S, font("seguisb.ttf", 19), (113, 113, 122))
+centered("legends.utilox.com", 560 * S, font("seguisb.ttf", 19), (113, 113, 122))
 
 img.convert("RGB").resize((1200, 630), Image.LANCZOS).save(out, optimize=True)
 print("saved", out)

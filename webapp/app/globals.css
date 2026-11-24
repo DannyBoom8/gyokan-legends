@@ -256,7 +256,24 @@ img:not([aria-hidden]) {
   .lift:hover { translate: 0 -2px; }
 }
 
+
+@keyframes pop-in { from { opacity: 0; scale: 0.96; translate: 0 6px; } }
+.pop-in { animation: pop-in 180ms var(--ease-out) both; }
+@keyframes sheet-in { from { translate: 0 24px; opacity: 0; } }
+@media (max-width: 767px) { .pop-in { animation-name: sheet-in; } }
+/* desktop shell: the bottom bar becomes a left sidebar */
+@media (min-width: 768px) {
+  body.has-sidebar { padding-left: 15rem; }
+}
+.arena {
+  background:
+    radial-gradient(ellipse at 50% 0%, color-mix(in oklab, var(--color-amber-500) 12%, transparent), transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 47px, color-mix(in oklab, var(--color-zinc-500) 9%, transparent) 47px 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, color-mix(in oklab, var(--color-zinc-500) 9%, transparent) 47px 48px);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .pop-in { animation-name: appear; }
   .slide-l, .slide-r, .vs-pop, .stamp-in { animation-name: appear; animation-delay: 0ms; }
   .shine::after, .edge-glow { animation: none; }
   .lift:hover { translate: none; }

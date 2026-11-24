@@ -12,6 +12,8 @@ export default function Party() {
   const [slots, setSlots] = useState([])
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState(null)
+  const [view, setView] = useState('formation')
+  const [active, setActive] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function Party() {
 
       const { data: slotData } = await supabase
         .from('party_slots')
-        .select('*, characters(character_id, name, image_url, anime_title, power_type, overall, gold_cost)')
+        .select('*, characters(character_id, name, image_url, anime_title, power_type, overall, gold_cost, strength, speed, defence, technique, magic, iq, aura)')
         .eq('party_id', partyData.id)
 
       setSlots(slotData || [])
@@ -54,6 +56,19 @@ export default function Party() {
     setRemoving(null)
   }
 
+  useEffect(() => {
+    const esc = (e) => e.key === 'Escape' && setActive(null)
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [])
+
+  const canHover = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  const change = async (slot, def) => {
+    const pos = slot.slot_position
+    await removeCharacter(slot.id)
+    router.push(`/characters?slot=${def.type}&position=${pos}&party=${party?.id}`)
+  }
+
   const totalGoldSpent = slots.reduce((sum, s) => sum + (s.characters?.gold_cost || 0), 0)
   const goldRemaining = BUDGET - totalGoldSpent
 
@@ -63,16 +78,119 @@ export default function Party() {
     return Array.from({ length: def.count }, (_, i) => i + 1).find(p => !taken.includes(p))
   }
 
+
+  const STATS = [['STR', 'strength'], ['SPD', 'speed'], ['DEF', 'defence'], ['TEC', 'technique'], ['MAG', 'magic'], ['IQ', 'iq'], ['AUR', 'aura']]
+  let tokenN = 0
+  const token = (def, i) => {
+    const slot = slots.filter(x => x.slot_type === def.type)[i]
+    const c = slot?.characters
+    const n = tokenN++
+    if (!slot) return (
+      <button key={`${def.type}-${i}`} onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
+        className={`enter press flex flex-col items-center gap-1.5 w-[88px] sm:w-[104px] ${def.color}`} style={{ '--i': n }}>
+        <span className="cut-sm w-[72px] h-[72px] sm:w-[88px] sm:h-[88px] border border-dashed border-current/50 flex items-center justify-center"
+          style={{ backgroundImage: 'repeating-linear-gradient(135deg, color-mix(in oklab, currentColor 8%, transparent) 0 8px, transparent 8px 16px)' }}>
+          <Icon name="plus" size={24} />
+        </span>
+        <span className="label !text-[0.6875rem]">Recruit</span>
+      </button>
+    )
+    const tc = POWER_HEX[c?.power_type] || '#71717a'
+    const open = active === slot.id
+    return (
+      <div key={slot.id} className="relative" style={{ '--tc': tc }}
+        onMouseEnter={() => canHover() && setActive(slot.id)}
+        onMouseLeave={() => canHover() && setActive(a => a === slot.id ? null : a)}>
+        <button onClick={() => setActive(a => (a === slot.id && !canHover()) ? null : slot.id)} aria-expanded={open}
+          onFocus={() => canHover() && setActive(slot.id)}
+          className="enter press lift flex flex-col items-center gap-1.5 w-[88px] sm:w-[104px]" style={{ '--i': n }}>
+          <span className="relative cut-sm p-[3px]" style={{ background: `linear-gradient(160deg, ${tc}, ${tc}22)`, boxShadow: open ? `0 0 22px ${tc}88` : 'none' }}>
+            <img src={c?.image_url} alt="" className="cut-sm w-[72px] h-[72px] sm:w-[88px] sm:h-[88px] object-cover object-top bg-zinc-800" />
+            <span className="display absolute -right-0.5 -bottom-0.5 text-[12px] leading-none px-1.5 py-[3px] text-on-accent num" style={{ background: tc }}>{c?.overall}</span>
+          </span>
+          <span className="display text-[11px] sm:text-xs uppercase leading-tight text-center line-clamp-2 max-w-full">{c?.name}</span>
+        </button>
+        {open && (
+          <>
+            <div className="fixed inset-0 z-[55] bg-black/60 md:hidden" onClick={() => setActive(null)} />
+            <div role="dialog" aria-label={c?.name}
+              className="pop-in fixed inset-x-3 bottom-3 z-[60] pb-safe md:absolute md:inset-x-auto md:bottom-auto md:top-full md:pb-0 md:mt-1 md:left-1/2 md:-translate-x-1/2 md:w-72 md:z-40">
+              <div className="frame cut" style={{ '--frame': `color-mix(in oklab, ${tc} 50%, var(--color-zinc-800))` }}>
+                <div className="inner cut p-4" style={{ background: `linear-gradient(160deg, color-mix(in oklab, ${tc} 16%, var(--color-zinc-950)), var(--color-zinc-950) 60%)` }}>
+                  <div className="flex gap-3">
+                    <img src={c?.image_url} alt="" className="cut-sm w-16 h-16 object-cover object-top bg-zinc-800 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="display uppercase leading-tight">{c?.name}</p>
+                      <p className="text-zinc-500 text-xs truncate">{c?.anime_title}</p>
+                      <p className="label !text-[0.6875rem] mt-1.5" style={{ color: tc }}>{c?.power_type} · OVR {c?.overall} · {formatGold(c?.gold_cost)}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 mt-3.5">
+                    {STATS.map(([lab, key]) => (
+                      <div key={key} className="flex flex-col items-center gap-1">
+                        <div className="h-12 w-full bg-zinc-900 flex items-end"><div className="w-full" style={{ height: `${c?.[key] ?? 0}%`, background: tc }} /></div>
+                        <span className="num text-[11px] leading-none">{c?.[key]}</span>
+                        <span className="label !text-[0.5625rem] !tracking-[0.06em]">{lab}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mt-4">
+                    <button onClick={() => router.push(`/character?id=${slot.character_id}`)} className="press label !text-[0.75rem] bg-amber-500 text-on-accent py-2.5 cut-sm">Profile</button>
+                    <button onClick={() => change(slot, def)} disabled={removing === slot.id} className="press label !text-[0.75rem] border border-zinc-700 py-2.5 disabled:opacity-40">Change</button>
+                    <button onClick={() => { removeCharacter(slot.id); setActive(null) }} className="press label !text-[0.75rem] border border-zinc-700 text-red-400 py-2.5">Remove</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  const row = (type, label) => {
+    const def = SLOT_DEFS.find(d => d.type === type)
+    return (
+      <div key={type} className="flex flex-col items-center gap-3">
+        <p className={`label !text-[0.6875rem] ${def.color}`}>{label} · {def.points} pts / win</p>
+        <div className="flex justify-center gap-3 sm:gap-6">
+          {Array.from({ length: def.count }, (_, i) => token(def, i))}
+        </div>
+      </div>
+    )
+  }
+
+  const formationView = (
+    <div className="relative">
+      <div className="arena absolute inset-0 border border-zinc-800 cut" aria-hidden="true" />
+      <div className="relative flex flex-col gap-7 py-7 px-3 sm:py-9">
+        {row('Champion', 'Front line · Champions')}
+        {row('Specialist', 'Strike · Specialists')}
+        {row('Support', 'Wings · Support')}
+        {row('Medic', 'Medic · cascade')}
+        <div className="border-t border-dashed border-zinc-800 pt-6 mx-4">{row('Sub', 'Bench · Subs')}</div>
+      </div>
+    </div>
+  )
+
   if (loading) return <PageSkeleton variant="cards" />
 
   return (
-    <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-4 enter">
-        <h1 className="display text-3xl">My Party</h1>
-        <p className="text-zinc-500 text-sm mt-1">Build your roster of 10 characters</p>
+    <div className="min-h-screen bg-black text-white pb-28 md:pb-12"><div className="md:max-w-6xl md:mx-auto">
+      <div className="px-5 md:px-8 pt-14 pb-4 enter flex items-end justify-between gap-4">
+        <div>
+          <h1 className="display text-3xl md:text-4xl uppercase">My Party</h1>
+          <p className="text-zinc-500 text-sm mt-1">Build your roster of 10 characters</p>
+        </div>
+        <div className="flex bg-zinc-900 p-1 rounded-xl" role="tablist" aria-label="Party view">
+          {[['formation', 'Formation'], ['list', 'List']].map(([id, lab]) => (
+            <button key={id} role="tab" aria-selected={view === id} onClick={() => { setView(id); setActive(null) }}
+              className={`label !text-[0.75rem] px-3.5 py-2 rounded-lg transition-colors duration-150 ${view === id ? 'bg-amber-500 text-on-accent' : 'text-zinc-500'}`}>{lab}</button>
+          ))}
+        </div>
       </div>
 
-      <div style={{ '--i': 1 }} className="enter mx-5 mb-5 bg-zinc-900 border border-zinc-800 border-t-2 border-t-amber-500 cut-sm p-4 flex items-center justify-between">
+      <div style={{ '--i': 1 }} className="enter mx-5 md:mx-8 mb-5 bg-zinc-900 border border-zinc-800 border-t-2 border-t-amber-500 cut-sm p-4 flex items-center justify-between">
         <div>
           <p className="label text-zinc-500 mb-1.5">Gold left</p>
           <p className={`num text-2xl ${goldRemaining < 0 ? 'text-red-400' : 'text-amber-400'}`}>
@@ -91,17 +209,18 @@ export default function Party() {
         </div>
       </div>
 
-      <div className="mx-5 -mt-3 mb-5 h-2 bg-zinc-900 border border-zinc-800 overflow-hidden" aria-hidden="true">
+      <div className="mx-5 md:mx-8 -mt-3 mb-5 h-2 bg-zinc-900 border border-zinc-800 overflow-hidden" aria-hidden="true">
         <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 origin-left transition-[scale] duration-500 ease-out" style={{ scale: `${Math.min(100, Math.max(0, (totalGoldSpent / BUDGET) * 100)) / 100} 1`, boxShadow: '0 0 12px rgb(245 158 11 / 0.5)' }} />
       </div>
 
       {goldRemaining < 0 && (
-        <p className="mx-5 -mt-2 mb-5 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+        <p className="mx-5 md:mx-8 -mt-2 mb-5 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
           Over budget: this party won&apos;t score on battle night. Swap someone for a cheaper pick.
         </p>
       )}
 
-      <div className="px-5 flex flex-col gap-5">
+      <div className="px-5 md:px-8">{view === 'formation' && formationView}</div>
+      {view === 'list' && <div className="px-5 md:px-8 grid md:grid-cols-2 gap-5 items-start">
         {SLOT_DEFS.map((def, defIndex) => {
           const filled = slots.filter(s => s.slot_type === def.type)
           return (
@@ -167,6 +286,7 @@ export default function Party() {
             </div>
           )
         })}
+      </div>}
       </div>
 
       <BottomNav active="party" />

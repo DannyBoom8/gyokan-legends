@@ -1,5 +1,5 @@
 'use client'
-import { useState, useSyncExternalStore } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { isDemo, runDemoBattle } from '../lib/demo'
@@ -14,6 +14,8 @@ export default function BottomNav({ active }) {
   const demo = useSyncExternalStore(noop, isDemo, () => false)
   const [battling, setBattling] = useState(false)
   const runBattle = async () => { setBattling(true); await runDemoBattle(); window.location.reload() }
+
+  useEffect(() => { document.body.classList.add('has-sidebar'); return () => document.body.classList.remove('has-sidebar') }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -69,8 +71,36 @@ export default function BottomNav({ active }) {
 
   return (
     <>
+      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-60 flex-col border-r border-zinc-800 bg-black px-3 py-6">
+        <p className="display text-2xl text-amber-500 px-3 mb-8 !tracking-[0.02em]">Gyokan <span className="label text-zinc-500 !tracking-[0.3em] !text-[0.6875rem] block">Legends</span></p>
+        <nav className="flex flex-col gap-1" aria-label="Main">
+          {[...tabs.filter(t => t.path), ...moreItems].map(item => {
+            const on = active === item.id
+            return (
+              <button key={item.id} onClick={() => router.push(item.path)} aria-current={on ? 'page' : undefined}
+                className={`press flex items-center gap-3 px-3 py-2.5 text-left transition-colors duration-150 cut-sm ${on ? 'bg-amber-500/10 text-amber-500 border-l-2 border-amber-500' : 'text-zinc-500 border-l-2 border-transparent hover:text-white hover:bg-white/[0.04]'}`}>
+                {item.icon && typeof item.icon === 'function' ? item.icon(on) : <Icon name={item.icon} size={22} />}
+                <span className="label !text-[0.8125rem]">{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+        <div className="mt-auto flex flex-col gap-2">
+          {demo && (
+            <button onClick={runBattle} disabled={battling}
+              className="press flex items-center gap-3 px-3 py-2.5 text-amber-500 disabled:opacity-50">
+              <Icon name="swords" size={20} /><span className="label !text-[0.8125rem]">{battling ? 'Battling…' : 'Run a battle night'}</span>
+            </button>
+          )}
+          <ThemeToggle />
+          <button onClick={handleLogout} className="press flex items-center gap-3 px-3 py-2.5 text-red-400">
+            <Icon name="logout" size={20} /><span className="label !text-[0.8125rem]">{demo ? 'Exit demo' : 'Log out'}</span>
+          </button>
+        </div>
+      </aside>
+
       {showMore && (
-        <div className="scrim fixed inset-0 z-40 bg-black/50" onClick={() => setShowMore(false)}>
+        <div className="scrim md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setShowMore(false)}>
           <div className="menu-pop absolute right-4 w-60 bottom-[calc(5rem+env(safe-area-inset-bottom))]" onClick={e => e.stopPropagation()}>
             <div className="material bg-zinc-900/80 backdrop-blur-xl backdrop-saturate-150 border border-white/10 rounded-[20px] p-1.5 shadow-2xl">
               {moreItems.map((item, i) => (
@@ -105,7 +135,7 @@ export default function BottomNav({ active }) {
       {demo && (
         <p className="label fixed top-3 right-3 z-50 rounded-full bg-amber-500 text-on-accent px-3 py-1.5 !text-[0.6875rem] pointer-events-none">Demo</p>
       )}
-      <nav className="material fixed bottom-0 left-0 right-0 z-50 bg-black/70 backdrop-blur-xl backdrop-saturate-150 border-t border-white/[0.06]">
+      <nav className="material md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/70 backdrop-blur-xl backdrop-saturate-150 border-t border-white/[0.06]">
         <div className="flex items-center pb-safe">
           {tabs.map(tab => {
             const isActive = active === tab.id || (tab.id === 'more' && (showMore || moreItems.some(m => m.id === active)))

@@ -8,6 +8,6 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   },
-  "routes": [{ "pattern": "gyokanlegends.utilox.com", "custom_domain": true }],
+  "routes": [{ "pattern": "legends.utilox.com", "custom_domain": true }],
   "workers_dev": false
 }
