@@ -28,6 +28,9 @@ export const POWER_COLORS = {
   Mythic: 'text-pink-400',
 }
 
+// hex values for glows and edges (the class map above can't feed inline styles)
+export const POWER_HEX = { Physical: '#fb923c', Tactical: '#60a5fa', Cursed: '#c084fc', Spiritual: '#5eead4', Elemental: '#4ade80', Mythic: '#fbbf24' }
+
 export const POWER_BADGES = {
   Physical: 'bg-orange-500/20 text-orange-400',
   Elemental: 'bg-blue-500/20 text-blue-400',

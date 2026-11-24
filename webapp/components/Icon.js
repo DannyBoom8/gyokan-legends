@@ -10,6 +10,7 @@ const PATHS = {
   crown: <><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" /></>,
   bolt: <><path d="M13 2L4 14h7l-1 8 9-12h-7z" /></>,
   medal: <><circle cx="12" cy="15" r="6" /><path d="M8.5 9.6L6 3h4l2 4.5M15.5 9.6L18 3h-4l-2 4.5" /></>,
+  plus: <><path d="M12 5v14M5 12h14" /></>,
   arrow: <><path d="M5 12h14M13 6l6 6-6 6" /></>,
   back: <><path d="M19 12H5M11 6l-6 6 6 6" /></>,
   letters: <><path d="M4 19l5-14 5 14M5.8 14h6.4" /><path d="M16 9h4.5M16 14h4.5M16 19h4.5" /></>,
