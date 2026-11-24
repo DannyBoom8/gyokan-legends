@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import Icon from '../components/Icon'
+import { Wordmark } from '../components/Logo'
 import { Sk } from '../components/Skeleton'
 import { startDemo } from '../lib/demo'
 import ThemeToggle from '../components/ThemeToggle'
@@ -81,8 +82,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10 enter">
-          <h1 className="display text-6xl text-amber-500 !tracking-[0.02em]">Gyokan</h1>
-          <p className="label text-zinc-500 !tracking-[0.4em] mt-2">Legends</p>
+          <h1><Wordmark className="mx-auto w-72 max-w-full text-white" /></h1>
           <p className="text-zinc-500 text-sm mt-4">Rise. Battle. Become Legend.</p>
         </div>
 

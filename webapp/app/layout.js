@@ -5,8 +5,8 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const display = Chakra_Petch({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display-face" });
 
 const description =
-  "Free anime games. Draft legends for weekly battles, or play Hangu-Manu, Anime Imposter and Anime Charades with friends. Nothing to download.";
-const shareTitle = "Gyokan Legends — Anime games to play solo or with friends";
+  "Anime fantasy battles. Draft 10 characters with 100M gold, send your party into battle every Thursday and climb the ranks to Legendary. Free to play.";
+const shareTitle = "Gyokan Legends — Draft anime fighters. Battle every Thursday.";
 
 export const metadata = {
   metadataBase: new URL("https://legends.utilox.com"),
@@ -17,14 +17,14 @@ export const metadata = {
     description,
     url: "/",
     siteName: "Gyokan Legends",
-    images: [{ url: "/og.png?v=8", width: 1200, height: 630, alt: "Gyokan Legends logo above five game tiles: Legends, Hangu-Manu, Imposter and Charades" }],
+    images: [{ url: "/og.png?v=10", width: 1200, height: 630, alt: "Gyokan Legends: two parties of fighters face off. Draft your party, battle every Thursday." }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: shareTitle,
     description,
-    images: ["/og.png?v=8"],
+    images: ["/og.png?v=10"],
   },
 };
 

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { isDemo, runDemoBattle } from '../lib/demo'
 import Icon from './Icon'
+import { Wordmark } from './Logo'
 import ThemeToggle from './ThemeToggle'
 
 const noop = () => () => {}
@@ -72,7 +73,7 @@ export default function BottomNav({ active }) {
   return (
     <>
       <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-60 flex-col border-r border-zinc-800 bg-black px-3 py-6">
-        <p className="display text-2xl text-amber-500 px-3 mb-8 !tracking-[0.02em]">Gyokan <span className="label text-zinc-500 !tracking-[0.3em] !text-[0.6875rem] block">Legends</span></p>
+        <Wordmark className="w-44 mx-3 mb-8 text-white" />
         <nav className="flex flex-col gap-1" aria-label="Main">
           {[...tabs.filter(t => t.path), ...moreItems].map(item => {
             const on = active === item.id
