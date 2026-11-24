@@ -11,8 +11,8 @@ export async function generateMetadata({ params }) {
     title: `${game.title} · Gyokan Legends`,
     description: game.blurb,
     // child openGraph replaces the parent's whole object, so repeat the image
-    openGraph: { title: `${game.title} · Gyokan Legends`, description: game.blurb, url: `/games/${game.slug}`, images: [{ url: '/og.png?v=10', width: 1200, height: 630 }] },
-    twitter: { card: 'summary_large_image', title: `${game.title} · Gyokan Legends`, description: game.blurb, images: ['/og.png?v=10'] },
+    openGraph: { title: `${game.title} · Gyokan Legends`, description: game.blurb, url: `/games/${game.slug}`, images: [{ url: '/og.png?v=11', width: 1200, height: 630 }] },
+    twitter: { card: 'summary_large_image', title: `${game.title} · Gyokan Legends`, description: game.blurb, images: ['/og.png?v=11'] },
   }
 }
 
