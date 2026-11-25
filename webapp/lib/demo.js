@@ -137,7 +137,8 @@ function embed(db, table, row, select) {
 
 function tableRows(db, table) {
   if (table !== 'leaderboard') return db[table] || []
-  return db.user_ranks.map(r => ({ username: db.users.find(u => u.id === r.user_id)?.username, current_rank: r.current_rank, season_points: r.season_points, all_time_points: r.all_time_points, is_legend: r.is_legend }))
+  const user = (id) => db.users.find(u => u.id === id)
+  return db.user_ranks.map(r => ({ username: user(r.user_id)?.username, avatar_character_id: user(r.user_id)?.avatar_character_id, current_rank: r.current_rank, season_points: r.season_points, all_time_points: r.all_time_points, is_legend: r.is_legend }))
 }
 
 function query(table) {
@@ -154,6 +155,7 @@ function query(table) {
     maybeSingle() { q.one = 'maybe'; return b },
     insert(values) { q.mode = 'insert'; q.values = Array.isArray(values) ? values : [values]; return b },
     delete() { q.mode = 'delete'; return b },
+    update(values) { q.mode = 'update'; q.values = values; return b },
     then(resolve, reject) { return run().then(resolve, reject) },
   }
   async function run() {
@@ -170,6 +172,10 @@ function query(table) {
       return { data: q.one && data ? data[0] : data, error: null }
     }
     let rows = tableRows(db, table).filter(r => filters.every(f => f(r)))
+    if (q.mode === 'update') {
+      rows.forEach(r => Object.assign(r, q.values)); save(db)
+      return { data: null, error: null }
+    }
     if (q.mode === 'delete') {
       db[table] = db[table].filter(r => !rows.includes(r)); save(db)
       return { data: null, error: null }

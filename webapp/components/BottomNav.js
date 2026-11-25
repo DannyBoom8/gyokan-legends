@@ -25,13 +25,13 @@ export default function BottomNav({ active }) {
 
   const tabs = [
     { id: 'dashboard', label: 'Home', path: '/dashboard', icon: (a) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
     )},
     { id: 'party', label: 'Party', path: '/party', icon: (a) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -39,23 +39,16 @@ export default function BottomNav({ active }) {
       </svg>
     )},
     { id: 'battles', label: 'Battles', path: '/battles', icon: (a) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
         <path d="M13 19l6-6"/>
         <path d="M16 16l4 4"/>
         <path d="M19 21l2-2"/>
       </svg>
     )},
-    { id: 'games', label: 'Games', path: '/games', icon: (a) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="7" width="20" height="11" rx="5"/>
-        <path d="M7 11v3M5.5 12.5h3" stroke={a ? 'black' : 'currentColor'}/>
-        <circle cx="15.5" cy="12" r="0.75" fill={a ? 'black' : 'currentColor'} stroke="none"/>
-        <circle cx="17.5" cy="14" r="0.75" fill={a ? 'black' : 'currentColor'} stroke="none"/>
-      </svg>
-    )},
+    { id: 'leaderboard', label: 'Ranks', full: 'Leaderboard', path: '/leaderboard', icon: () => <Icon name="trophy" size={24} /> },
     { id: 'more', label: 'More', path: null, icon: () => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="5" cy="12" r="2"/>
         <circle cx="12" cy="12" r="2"/>
         <circle cx="19" cy="12" r="2"/>
@@ -64,69 +57,69 @@ export default function BottomNav({ active }) {
   ]
 
   const moreItems = [
+    { id: 'games', label: 'Games', icon: 'gamepad', path: '/games' },
     { id: 'characters', label: 'Characters', icon: 'cards', path: '/characters' },
     { id: 'points', label: 'Points', icon: 'chart', path: '/points' },
-    { id: 'leaderboard', label: 'Leaderboard', icon: 'trophy', path: '/leaderboard' },
     { id: 'rules', label: 'How to play', icon: 'scroll', path: '/rules' },
   ]
 
+  const action = 'mn-item w-full flex items-center gap-4 px-5 py-3 text-left disabled:opacity-50'
+
   return (
     <>
-      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-60 flex-col border-r border-zinc-800 bg-black px-3 py-6">
-        <Wordmark className="w-44 mx-3 mb-8 text-white" />
-        <nav className="flex flex-col gap-1" aria-label="Main">
+      <aside className="mn mn-side hidden md:flex fixed inset-y-0 left-0 z-40 w-60 flex-col overflow-y-auto">
+        <div className="px-5 pt-6 pb-5"><Wordmark className="w-full" /></div>
+        <nav className="flex-1 flex flex-col" aria-label="Main">
           {[...tabs.filter(t => t.path), ...moreItems].map(item => {
             const on = active === item.id
             return (
               <button key={item.id} onClick={() => router.push(item.path)} aria-current={on ? 'page' : undefined}
-                className={`press flex items-center gap-3 px-3 py-2.5 text-left transition-colors duration-150 cut-sm ${on ? 'bg-amber-500/10 text-amber-500 border-l-2 border-amber-500' : 'text-zinc-500 border-l-2 border-transparent hover:text-white hover:bg-white/[0.04]'}`}>
-                {item.icon && typeof item.icon === 'function' ? item.icon(on) : <Icon name={item.icon} size={22} />}
-                <span className="label !text-[0.8125rem]">{item.label}</span>
+                className="mn-item press flex-1 min-h-[2.75rem] max-h-16 flex items-center gap-4 px-5 text-left">
+                {typeof item.icon === 'function' ? item.icon(on) : <Icon name={item.icon} size={24} />}
+                <span className="mn-text text-xl">{item.full || item.label}</span>
               </button>
             )
           })}
         </nav>
-        <div className="mt-auto flex flex-col gap-2">
-          {demo && (
-            <button onClick={runBattle} disabled={battling}
-              className="press flex items-center gap-3 px-3 py-2.5 text-amber-500 disabled:opacity-50">
-              <Icon name="swords" size={20} /><span className="label !text-[0.8125rem]">{battling ? 'Battling…' : 'Run a battle night'}</span>
+        {/* native disclosure: closed until asked for */}
+        <details className="group pb-2">
+          <summary className="mn-item flex items-center gap-4 px-5 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+            <Icon name="gear" size={22} /><span className="mn-text text-lg flex-1">Settings</span>
+            {demo && <span className="label !text-[0.625rem] bg-[var(--spot)] text-white px-2 py-1">Demo</span>}
+          </summary>
+          <div className="flex flex-col gap-1 pt-1">
+            <div className="px-3 py-1"><ThemeToggle /></div>
+            {demo && (
+              <button onClick={runBattle} disabled={battling} className={action}>
+                <Icon name="swords" size={22} /><span className="mn-text text-lg">{battling ? 'Battling…' : 'Battle night'}</span>
+              </button>
+            )}
+            <button onClick={handleLogout} className={action}>
+              <Icon name="logout" size={22} /><span className="mn-text text-lg">{demo ? 'Exit demo' : 'Log out'}</span>
             </button>
-          )}
-          <ThemeToggle />
-          <button onClick={handleLogout} className="press flex items-center gap-3 px-3 py-2.5 text-red-400">
-            <Icon name="logout" size={20} /><span className="label !text-[0.8125rem]">{demo ? 'Exit demo' : 'Log out'}</span>
-          </button>
-        </div>
+          </div>
+        </details>
       </aside>
 
       {showMore && (
-        <div className="scrim md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setShowMore(false)}>
-          <div className="menu-pop absolute right-4 w-60 bottom-[calc(5rem+env(safe-area-inset-bottom))]" onClick={e => e.stopPropagation()}>
-            <div className="material bg-zinc-900/80 backdrop-blur-xl backdrop-saturate-150 border border-white/10 rounded-[20px] p-1.5 shadow-2xl">
-              {moreItems.map((item, i) => (
-                <button key={item.label}
-                  onClick={() => { router.push(item.path); setShowMore(false) }}
-                  aria-current={active === item.id ? 'page' : undefined}
-                  className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] transition-colors duration-150 active:bg-white/10 ${active === item.id ? 'bg-white/[0.06]' : ''}`}>
-                  <Icon name={item.icon} size={20} className={`icon-in ${active === item.id ? 'text-amber-500' : 'text-zinc-500'}`} style={{ '--i': i }} />
-                  <span className="text-white text-sm">{item.label}</span>
+        <div className="scrim md:hidden fixed inset-0 z-40 bg-[rgb(0_0_0/0.65)]" onClick={() => setShowMore(false)}>
+          <div className="mn menu-pop absolute right-3 w-60 bottom-[calc(5.25rem+env(safe-area-inset-bottom))]" onClick={e => e.stopPropagation()}>
+            <div className="mn-sheet flex flex-col py-2">
+              {moreItems.map(item => (
+                <button key={item.id} onClick={() => { router.push(item.path); setShowMore(false) }}
+                  aria-current={active === item.id ? 'page' : undefined} className={action}>
+                  <Icon name={item.icon} size={22} />
+                  <span className="mn-text text-lg">{item.label}</span>
                 </button>
               ))}
-              <div className="h-px bg-white/10 mx-3 my-1" />
-              <div className="px-2 py-1.5"><ThemeToggle /></div>
-              <div className="h-px bg-white/10 mx-3 my-1" />
+              <div className="px-3 py-1"><ThemeToggle /></div>
               {demo && (
-                <button onClick={runBattle} disabled={battling}
-                  className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] transition-colors duration-150 active:bg-white/10 disabled:opacity-50">
-                  <Icon name="swords" size={20} className="icon-in text-amber-500" style={{ '--i': 4 }} />
-                  <span className="text-white text-sm">{battling ? 'Battling…' : 'Run a battle night'}</span>
+                <button onClick={runBattle} disabled={battling} className={action}>
+                  <Icon name="swords" size={22} /><span className="mn-text text-lg">{battling ? 'Battling…' : 'Battle night'}</span>
                 </button>
               )}
-              <button onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-[14px] transition-colors duration-150 active:bg-white/10">
-                <Icon name="logout" size={20} className="icon-in text-red-400" style={{ '--i': 4 }} />
-                <span className="text-red-400 text-sm font-medium">{demo ? 'Exit demo' : 'Log Out'}</span>
+              <button onClick={handleLogout} className={action}>
+                <Icon name="logout" size={22} /><span className="mn-text text-lg">{demo ? 'Exit demo' : 'Log out'}</span>
               </button>
             </div>
           </div>
@@ -134,24 +127,26 @@ export default function BottomNav({ active }) {
       )}
 
       {demo && (
-        <p className="label fixed top-3 right-3 z-50 rounded-full bg-amber-500 text-on-accent px-3 py-1.5 !text-[0.6875rem] pointer-events-none">Demo</p>
+        <p className="label md:hidden fixed top-3 right-3 z-50 bg-[var(--spot)] text-white px-3 py-1.5 !text-[0.6875rem] pointer-events-none">Demo</p>
       )}
-      <nav className="material md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/70 backdrop-blur-xl backdrop-saturate-150 border-t border-white/[0.06]">
-        <div className="flex items-center pb-safe">
+      <nav className="mn mn-bar md:hidden fixed bottom-0 left-0 right-0 z-50" aria-label="Main">
+        <div className="flex items-stretch pb-safe">
           {tabs.map(tab => {
             const isActive = active === tab.id || (tab.id === 'more' && (showMore || moreItems.some(m => m.id === active)))
             return (
               <button key={tab.id}
                 aria-current={active === tab.id ? 'page' : undefined}
+                aria-label={tab.full}
                 aria-expanded={tab.id === 'more' ? showMore : undefined}
+                data-on={isActive}
                 onClick={() => {
                   if (tab.id === 'more') { setShowMore(prev => !prev); return }
                   setShowMore(false)
                   router.push(tab.path)
                 }}
-                className={`press flex-1 flex flex-col items-center gap-1 py-3 ${isActive ? 'text-amber-500' : 'text-zinc-500'}`}>
+                className="mn-item press flex-1 min-w-0 flex flex-col items-center gap-1.5 py-3">
                 {tab.icon(isActive)}
-                <span className="label !text-[0.6875rem] !tracking-[0.1em]">{tab.label}</span>
+                <span className="mn-text text-sm">{tab.label}</span>
               </button>
             )
           })}

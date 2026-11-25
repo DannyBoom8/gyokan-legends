@@ -1,33 +1,25 @@
 'use client'
-import { useRouter } from 'next/navigation'
-import BottomNav from '../../components/BottomNav'
 import { BEATS, BUDGET, DRAW_POINTS, MEDIC_BOOST, POWER_COLORS, RANKS, SLOT_DEFS, formatGold } from '../../lib/game'
-import Icon from '../../components/Icon'
+import { Screen, PageHead, Panel, Caption } from '../../components/Manga'
 
 function Section({ title, i, children }) {
   return (
-    <section style={{ '--i': i }} className="enter bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-      <h2 className="display text-lg mb-3">{title}</h2>
-      {children}
-    </section>
+    <Panel i={i} className="hov" pageClass="flex flex-col">
+      <Caption>{title}</Caption>
+      <div className="p-4 md:p-5">{children}</div>
+    </Panel>
   )
 }
 
 export default function Rules() {
-  const router = useRouter()
-
   return (
-    <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-6 enter">
-        <button onClick={() => router.back()} className="press label text-zinc-500 mb-4 flex items-center gap-1.5 min-h-8"><Icon name="back" size={16} /> Back</button>
-        <h1 className="display text-3xl">How to play</h1>
-        <p className="text-zinc-500 text-sm mt-2">Rise. Battle. Become Legend.</p>
-      </div>
+    <Screen nav="rules">
+      <PageHead title="How to play" sub="Rise. Battle. Become Legend." back />
 
-      <div className="px-5 flex flex-col gap-4 text-[0.9375rem] text-zinc-400 leading-relaxed max-w-prose">
+      <div className="grid gap-3 md:grid-cols-2 text-[0.9375rem] leading-relaxed">
         <Section i={1} title="1. Build your party">
           <p>
-            You have <span className="text-amber-400 font-semibold">{formatGold(BUDGET)} gold</span>{' '}to sign 10 characters.
+            You have <span className="font-bold">{formatGold(BUDGET)} gold</span>{' '}to sign 10 characters.
             Stronger characters cost more, so a party of only stars won&apos;t fit.
           </p>
           <div className="mt-4 flex flex-col gap-2">
@@ -76,8 +68,6 @@ export default function Rules() {
           <p className="mt-4">Reach Legendary once and you keep the Legend badge for good.</p>
         </Section>
       </div>
-
-      <BottomNav active="rules" />
-    </div>
+    </Screen>
   )
 }

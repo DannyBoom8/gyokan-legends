@@ -2,10 +2,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
-import BottomNav from '../../components/BottomNav'
 import PageSkeleton from '../../components/Skeleton'
-import { BEATS, POWER_BADGES, STATS, formatGold } from '../../lib/game'
-import Icon from '../../components/Icon'
+import { BEATS, POWER_HEX, STATS, formatGold } from '../../lib/game'
+import { Screen, PageHead, Panel, Caption } from '../../components/Manga'
 
 // PostgREST returns a one-to-one embed as an object, older setups as an array
 const one = (r) => Array.isArray(r) ? r[0] : r
@@ -46,10 +45,9 @@ function CharacterProfile() {
   if (loading) return <PageSkeleton variant="detail" />
 
   if (!char) return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-4">
-      <p className="text-zinc-500 text-sm">Character not found</p>
-      <button onClick={() => router.back()} className="press text-amber-500 text-sm">Go back</button>
-    </div>
+    <Screen nav="characters">
+      <PageHead title="Character not found" back />
+    </Screen>
   )
 
   const cid = char.character_id
@@ -62,83 +60,84 @@ function CharacterProfile() {
   const weakTo = Object.keys(BEATS).find(t => BEATS[t] === char.power_type)
 
   return (
-    <div className="min-h-screen bg-black text-white pb-28">
-      <div className="relative h-72 overflow-hidden">
-        <img src={char.image_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black" />
-        <button onClick={() => router.back()} className="press absolute top-12 left-5 text-zinc-200 text-sm bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5">
-          <Icon name="back" size={16} /> Back
-        </button>
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-4 enter">
-          <img src={char.image_url} alt={char.name} className="w-28 h-36 rounded-2xl object-cover border border-white/10 shadow-2xl bg-zinc-800" />
-          <div className="min-w-0 pb-1">
-            <h1 className="display text-3xl">{char.name}</h1>
-            <p className="text-zinc-400 text-sm truncate">{char.anime_title}</p>
-            {char.power_type && (
-              <span className={`hud !py-0.5 !px-2.5 mt-2 ${POWER_BADGES[char.power_type]}`}>{char.power_type}</span>
-            )}
-          </div>
-        </div>
-      </div>
+    <Screen nav="characters">
+      <PageHead title={char.name} sub={char.anime_title} back />
 
-      <div className="mx-5 mt-4 grid grid-cols-3 gap-3 enter" style={{ '--i': 1 }}>
-        {[
-          ['Overall', char.overall ?? '—', 'text-white'],
-          ['Cost', formatGold(char.gold_cost), 'text-amber-400'],
-          ['Record', `${record.W}-${record.D}-${record.L}`, 'text-white'],
-        ].map(([label, value, color]) => (
-          <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 text-center">
-            <p className="label text-zinc-500 mb-2">{label}</p>
-            <p className={`num text-xl ${color}`}>{value}</p>
-          </div>
-        ))}
-      </div>
+      <div className="grid gap-3 lg:grid-cols-12 items-start">
+        <Panel i={1} className="hov art lg:col-span-4 w-full max-w-md justify-self-center">
+          <img src={char.image_url} alt={char.name} className="block w-full aspect-[3/4] object-cover object-top" />
+          {char.power_type && (
+            <span className="poster absolute left-0 bottom-0 text-xl bg-[var(--ink)] text-[var(--paper)] px-3 py-2">
+              <span className="inline-block w-3 h-3 mr-2" style={{ background: POWER_HEX[char.power_type] }} />{char.power_type}
+            </span>
+          )}
+        </Panel>
 
-      <div className="mx-5 mt-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-5 enter" style={{ '--i': 2 }}>
-        <p className="text-zinc-500 label mb-4">Stats</p>
-        <div className="flex flex-col gap-3">
-          {STATS.map(s => (
-            <div key={s} className="flex items-center gap-3">
-              <span className="label text-zinc-400 w-20">{s === 'iq' ? 'IQ' : s}</span>
-              <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500 rounded-full bar-fill" style={{ scale: `${(char[s] || 0) / 100} 1` }} />
+        <div className="lg:col-span-8 flex flex-col gap-3">
+          <Panel i={2} className="hov" pageClass="p-4">
+            <dl className="grid grid-cols-3 divide-x-2 divide-current/25">
+              {[['Overall', char.overall ?? '—'], ['Cost', formatGold(char.gold_cost)], ['Record', `${record.W}-${record.D}-${record.L}`]].map(([label, value]) => (
+                <div key={label} className="px-3 first:pl-0">
+                  <dt className="label muted !text-[0.625rem]">{label}</dt>
+                  <dd className="poster text-3xl mt-1.5">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </Panel>
+
+          <Panel i={3} className="hov">
+            <Caption>Stats</Caption>
+            <div className="p-4">
+              <div className="flex flex-col gap-3">
+                {STATS.map(s => (
+                  <div key={s} className="flex items-center gap-3">
+                    <span className="label muted w-20">{s === 'iq' ? 'IQ' : s}</span>
+                    <div className="flex-1 h-3 bg-zinc-800">
+                      <div className="h-full bg-[var(--spot)] bar-fill" style={{ scale: `${(char[s] || 0) / 100} 1` }} />
+                    </div>
+                    <span className="poster text-lg w-8 text-right">{char[s] ?? '—'}</span>
+                  </div>
+                ))}
               </div>
-              <span className="num text-white text-sm w-7 text-right">{char[s] ?? '—'}</span>
+              {char.power_type && (
+                <p className="muted text-sm mt-5">
+                  Strong against <strong className="text-white">{BEATS[char.power_type]}</strong> · weak to <strong className="text-white">{weakTo}</strong>
+                </p>
+              )}
             </div>
-          ))}
+          </Panel>
+
+          <Panel i={4} className="hov">
+            <Caption>Recent battles</Caption>
+            <div className="px-4 py-2">
+              {fights.length === 0 ? (
+                <p className="muted text-sm py-2">No battles yet. The first one is on Thursday.</p>
+              ) : (
+                <ul className="divide-y-2 divide-current/20">
+                  {fights.slice(0, 5).map(fx => {
+                    const opp = fx.char_a?.character_id === cid ? fx.char_b : fx.char_a
+                    const o = outcome(fx)
+                    return (
+                      <li key={fx.fixture_id}>
+                        <button onClick={() => router.push(`/character?id=${opp?.character_id}`)}
+                          className="toc hov-row press w-full py-2.5 px-2 flex items-center gap-3 text-left">
+                          <span className={`poster w-8 h-8 flex items-center justify-center text-lg ${o === 'W' ? 'bg-[var(--spot)] text-white' : 'border-2 border-current/30 muted'}`}>
+                            <span aria-hidden="true">{o}</span><span className="sr-only">{{ W: 'Won', D: 'Drew', L: 'Lost' }[o]}</span>
+                          </span>
+                          <img src={opp?.image_url} alt="" className="w-11 h-11 object-cover object-top border-2 border-[var(--line)]" />
+                          <span className="flex-1 min-w-0 text-sm font-semibold truncate">vs {opp?.name}</span>
+                          <span className="label muted">GW {one(fx.gameweeks)?.gameweek_number}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </div>
+          </Panel>
         </div>
-        {char.power_type && (
-          <p className="text-zinc-500 text-xs mt-5 leading-relaxed">
-            Strong against <span className="text-white">{BEATS[char.power_type]}</span> · weak to <span className="text-white">{weakTo}</span>
-          </p>
-        )}
       </div>
-
-      <div className="mx-5 mt-4 enter" style={{ '--i': 3 }}>
-        <p className="text-zinc-500 label mb-3">Recent battles</p>
-        {fights.length === 0 ? (
-          <p className="text-zinc-500 text-sm">No battles yet. The first one is on Thursday.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {fights.slice(0, 5).map(fx => {
-              const opp = fx.char_a?.character_id === cid ? fx.char_b : fx.char_a
-              const o = outcome(fx)
-              return (
-                <button key={fx.fixture_id} onClick={() => router.push(`/character?id=${opp?.character_id}`)}
-                  className="press bg-zinc-900 border border-zinc-800 rounded-[20px] p-3 flex items-center gap-3 text-left">
-                  <span className={`w-7 text-center font-bold text-sm ${o === 'W' ? 'text-amber-400' : o === 'L' ? 'text-zinc-500' : 'text-zinc-400'}`}>{o}</span>
-                  <img src={opp?.image_url} alt="" className="w-9 h-9 rounded-lg object-cover bg-zinc-800" />
-                  <p className="flex-1 text-sm text-white truncate">vs {opp?.name}</p>
-                  <span className="text-zinc-500 text-xs">GW {one(fx.gameweeks)?.gameweek_number}</span>
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      <BottomNav active="characters" />
-    </div>
+    </Screen>
   )
 }
 

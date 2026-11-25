@@ -1,5 +1,5 @@
 -- Full schema for a fresh Supabase project, matching what the web app and pipeline use.
--- Fresh project: run this file, then 002_leaderboard.sql and 003_harden.sql. Existing database: run only 002_leaderboard.sql.
+-- Fresh project: run this file, then 002_leaderboard.sql, 003_harden.sql and 004_avatar.sql, in that order.
 
 CREATE TABLE characters (
     character_id        INT PRIMARY KEY,           -- AniList id

@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
-import BottomNav from '../../components/BottomNav'
 import PageSkeleton from '../../components/Skeleton'
 import { SLOT_COLORS, formatPoints } from '../../lib/game'
 import Icon from '../../components/Icon'
+import { Screen, PageHead, Panel, Caption } from '../../components/Manga'
 
 export default function Points() {
   const [loading, setLoading] = useState(true)
@@ -46,61 +46,56 @@ export default function Points() {
   const seasonPoints = formatPoints(rankData?.season_points)
 
   return (
-    <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-6 enter">
-        <button onClick={() => router.push('/dashboard')} className="press label text-zinc-500 mb-4 flex items-center gap-1.5 min-h-8">
-          <Icon name="back" size={16} /> Dashboard
-        </button>
-        <h1 className="display text-3xl">Points</h1>
+    <Screen nav="points" width="max-w-3xl">
+      <PageHead title="Points" sub="Your scoring log" back="/dashboard" backLabel="Home" />
+
+      <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Panel i={1} className="hov" pageClass="p-4">
+            <p className="label muted">Season total</p>
+            <p className="poster text-5xl mt-2">{seasonPoints}</p>
+          </Panel>
+          <Panel i={2} className="hov" pageClass="!bg-[#12100e] text-[#f3efe4] p-4">
+            <div className="tone absolute -z-10 inset-0" style={{ '--ink': '#f3efe4' }} aria-hidden="true" />
+            <p className="label">Last battle</p>
+            <p className="poster text-5xl mt-2">{totalThisWeek}</p>
+          </Panel>
+        </div>
+
+        {points.length === 0 ? (
+          <Panel i={3} pageClass="flex flex-col items-center text-center py-12 px-5">
+            <Icon name="chart" size={48} />
+            <h2 className="poster text-3xl mt-4 mb-3">No points yet</h2>
+            <p className="muted text-sm leading-relaxed max-w-xs">
+              Your breakdown will appear here after your first Thursday battle. Make sure your party is ready.
+            </p>
+          </Panel>
+        ) : (
+          <Panel i={3}>
+            <Caption>Last battle night</Caption>
+            <ul className="divide-y-2 divide-current/20 px-3 py-1">
+              {points.map(p => (
+                <li key={p.points_id} className="hov-row py-3 px-2 flex items-center gap-3">
+                  <img src={p.characters?.image_url} alt="" className="w-12 h-14 object-cover object-top border-2 border-[var(--line)] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="poster text-lg truncate">{p.characters?.name}</p>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                      <span className={`label ${SLOT_COLORS[p.slot_type] || 'muted'}`}>{p.slot_type}</span>
+                      {p.medic_boost_applied && (
+                        <span className="hud !p-0 text-green-400 !tracking-[0.08em]"><Icon name="bolt" size={12} />Medic boost</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className={`poster text-2xl ${Number(p.final_points) > 0 ? '' : 'muted'}`}>{formatPoints(p.final_points)} pts</p>
+                    {p.medic_boost_applied && <p className="muted text-xs line-through mt-1">{p.base_points} pts</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        )}
       </div>
-
-      <div className="mx-5 mb-5 grid grid-cols-2 gap-3 enter" style={{ '--i': 1 }}>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-          <p className="text-zinc-500 label mb-1">Season total</p>
-          <p className="num text-3xl text-white">{seasonPoints}</p>
-        </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-          <p className="text-zinc-500 label mb-1">Last battle</p>
-          <p className="num text-3xl text-amber-400">{totalThisWeek}</p>
-        </div>
-      </div>
-
-      {points.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-5">
-          <div className="text-amber-500 mb-4"><Icon name="chart" size={48} className="icon-in icon-float" /></div>
-          <h2 className="display text-xl mb-2">No points yet</h2>
-          <p className="text-zinc-500 text-sm text-center leading-relaxed">
-            Your breakdown will appear here after your first Thursday battle. Make sure your party is ready.
-          </p>
-        </div>
-      ) : (
-        <div className="px-5 flex flex-col gap-2 enter" style={{ '--i': 2 }}>
-          <p className="text-zinc-500 label mb-2">Last battle night</p>
-          {points.map(p => (
-            <div key={p.points_id} className="bg-zinc-900 border border-zinc-800 rounded-[24px] p-3 flex items-center gap-3">
-              <img src={p.characters?.image_url} alt={p.characters?.name}
-                className="w-10 h-10 rounded-xl object-cover flex-shrink-0 bg-zinc-800" />
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-medium truncate">{p.characters?.name}</p>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs ${SLOT_COLORS[p.slot_type] || 'text-zinc-400'}`}>{p.slot_type}</span>
-                  {p.medic_boost_applied && (
-                    <span className="hud !p-0 text-green-400 !tracking-[0.08em]"><Icon name="bolt" size={12} />Medic boost</span>
-                  )}
-                </div>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className={`num text-lg ${Number(p.final_points) > 0 ? 'text-white' : 'text-zinc-500'}`}>{formatPoints(p.final_points)} pts</p>
-                {p.medic_boost_applied && (
-                  <p className="text-zinc-500 text-xs line-through">{p.base_points} pts</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <BottomNav active="points" />
-    </div>
+    </Screen>
   )
 }

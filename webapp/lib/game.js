@@ -47,7 +47,7 @@ export const RANKS = [
   { name: 'Veteran', min: 110, color: 'text-blue-400', bg: 'border-blue-500/30 bg-blue-500/5' },
   { name: 'Warlord', min: 220, color: 'text-red-400', bg: 'border-red-500/30 bg-red-500/5' },
   { name: 'Sovereign', min: 350, color: 'text-purple-400', bg: 'border-purple-500/30 bg-purple-500/5' },
-  { name: 'Legendary', min: 500, color: 'text-amber-400', bg: 'border-amber-500/30 bg-amber-500/5' },
+  { name: 'Legendary', min: 500, color: 'text-yellow-400', bg: 'border-yellow-500/30 bg-yellow-500/5' },
 ]
 
 export const rankInfo = (name) => RANKS.find(r => r.name === name) || RANKS[0]

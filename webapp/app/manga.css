@@ -1,0 +1,185 @@
+/* Manga look for the whole app: pages (.mg, see components/Manga.js) and the navigation (.mn).
+   Light theme reads as a printed page, dark theme as an inverted one. */
+:root {
+  --paper: #0d0c0b;
+  --panel: #171614;
+  --ink: #f3efe4;
+  --line: #d9d3c3;
+  --muted: #b6b1a5;
+  --spot: #d4231b;
+  --spot-text: #ff6a5c; /* red that stays readable as small text */
+  --bg-art: 0.07;
+  --type-mix: 100%; /* how much of a power type's colour its label keeps */
+}
+:root[data-theme="light"] {
+  --paper: #e9e4d6;
+  --panel: #fbf9f2;
+  --ink: #12100e;
+  --line: #12100e;
+  --muted: #4f4a42;
+  --spot-text: #b3140d;
+  --bg-art: 0.1;
+  --type-mix: 50%;
+}
+
+/* a faint manga page behind the panels; the mask lets one file follow either theme */
+.mg::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: var(--ink); opacity: var(--bg-art);
+  mask: url('/manga-bg.svg') 0 0 / 900px repeat;
+}
+
+.mg { color: var(--ink); }
+.mg ::selection { background: var(--spot); color: #fff; }
+.mg :focus-visible { outline: 3px solid var(--spot); outline-offset: -3px; }
+.mg .muted { color: var(--muted); }
+.mg .poster { font-family: var(--font-poster), Impact, sans-serif; text-transform: uppercase; line-height: 0.95; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+
+/* a panel is an ink shape with the paper inset inside it, so slanted edges keep their border */
+.mg .panel { position: relative; display: flex; background: var(--line); padding: 3px; clip-path: var(--shape, none); }
+.mg .panel > .page { position: relative; isolation: isolate; flex: 1; min-width: 0; overflow: hidden; background: var(--panel); clip-path: var(--shape, none); }
+/* side by side panels share a slanted gutter, the way a manga page is cut */
+@media (min-width: 1024px) {
+  .mg { --s: 34px; }
+  .mg .lean-a { --shape: polygon(0 0, 100% 0, calc(100% - var(--s)) 100%, 0 100%); }
+  .mg .lean-a > .page > .pad { padding-right: calc(var(--s) + 14px); }
+  .mg .lean-a + .panel { --shape: polygon(var(--s) 0, 100% 0, 100% 100%, 0 100%); margin-left: calc(-1 * var(--s)); }
+  .mg .lean-a + .panel > .page > .pad { padding-left: calc(var(--s) + 14px); }
+  .mg .lean-b { --shape: polygon(0 0, calc(100% - var(--s)) 0, 100% 100%, 0 100%); }
+  .mg .lean-b > .page > .pad { padding-right: calc(var(--s) + 14px); }
+  .mg .lean-b + .panel { --shape: polygon(0 0, 100% 0, 100% 100%, var(--s) 100%); margin-left: calc(-1 * var(--s)); }
+  .mg .lean-b + .panel > .page > .pad { padding-left: calc(var(--s) + 14px); }
+}
+
+/* narration box tucked into a panel corner */
+.mg .caption { display: inline-block; background: var(--ink); color: var(--paper); padding: 8px 16px 8px 14px; }
+
+.mg .tone {
+  pointer-events: none;
+  background-image: radial-gradient(color-mix(in oklab, var(--ink) 30%, transparent) 1.1px, transparent 1.6px);
+  background-size: 6px 6px;
+  mask-image: linear-gradient(var(--tone-angle, 225deg), #000, transparent 55%);
+}
+/* straight panel, for anything that can't be clipped (popovers, lists, forms) */
+.mg .box { background: var(--panel); border: 3px solid var(--line); }
+.mg .ink-panel { background: #12100e; color: #f3efe4; --ink: #f3efe4; --muted: #b6b1a5; }
+
+.mg .btn, .mg .btn-spot { font-family: var(--font-poster), Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.03em; line-height: 1; }
+.mg .btn { border: 2px solid var(--line); transition: background-color 150ms ease, color 150ms ease, scale 150ms var(--ease-out), translate 150ms var(--ease-out), box-shadow 150ms var(--ease-out); }
+.mg .btn:active:not(:disabled) { scale: 0.97; }
+.mg .btn[aria-pressed="true"], .mg .btn[aria-selected="true"] { background: var(--spot); border-color: var(--spot); color: #fff; }
+.mg :is(.btn, .btn-spot):disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mg .field { width: 100%; background: var(--panel); color: var(--ink); border: 3px solid var(--line); padding: 12px 14px; font-size: 1rem; }
+.mg .field::placeholder { color: var(--muted); }
+.mg .field:focus { outline: none; border-color: var(--spot); }
+
+/* power type colours, deepened on paper so they stay readable */
+.mg .type-text { color: color-mix(in oklab, var(--tc) var(--type-mix), var(--ink)); }
+/* small ink tag pinned to a portrait corner */
+.mg .tag { position: absolute; background: var(--ink); color: var(--paper); padding: 2px 6px; }
+
+.art img, .mg .hov-card img { transition: scale 250ms var(--ease-out); }
+
+/* battle card: the two halves lean into each other, the 3px between them is the gutter */
+.mg .fx-a { clip-path: polygon(0 0, 100% 0, calc(100% - 24px) 100%, 0 100%); }
+.mg .fx-b { clip-path: polygon(24px 0, 100% 0, 100% 100%, 0 100%); margin-left: -21px; }
+.mg .btn-spot { background: var(--spot); color: #fff; transition: background-color 150ms ease, scale 150ms var(--ease-out), translate 150ms var(--ease-out), box-shadow 150ms var(--ease-out); }
+.mg .btn-spot:active:not(:disabled) { scale: 0.97; }
+.mg .toc { transition: background-color 150ms ease; }
+.mg .toc:active, .mg .toc:focus-visible { background: color-mix(in oklab, var(--ink) 10%, var(--panel)); }
+
+/* ---------- hover: mouse and trackpad only, so a tap never leaves a widget stuck raised ----------
+   .hov        a whole widget grows and its ink line turns red
+   .hov-card   a card lifts off the page onto a red drop shadow
+   .hov-thumb  only the portrait lifts, so the pointer target stays still
+   .hov-row    a list row slides out behind a red edge
+   .hov-tile   a contents tile floods red */
+@media (hover: hover) and (pointer: fine) {
+  button.art:hover img, button:hover .art img, .mg .hov-card:hover img { scale: 1.12; }
+  .mg .panel.art:hover img { scale: 1.07; }
+  .mg li.art:hover img { scale: 1.15; }
+
+  .mg .hov { transition: scale 220ms var(--ease-out), background-color 160ms ease, border-color 160ms ease, box-shadow 220ms var(--ease-out); }
+  .mg .hov:hover { z-index: 5; scale: 1.018; }
+  .mg .panel.hov:hover { background: var(--spot); }
+  .mg .box.hov:hover { border-color: var(--spot); box-shadow: 8px 8px 0 var(--spot); }
+  .mg .hov:hover .caption { background: var(--spot); color: #fff; }
+  .mg .hov:hover .tone { background-image: radial-gradient(color-mix(in oklab, var(--spot) 85%, transparent) 1.5px, transparent 2.1px); }
+  .mg .hov-icon { transition: scale 220ms var(--ease-out), rotate 220ms var(--ease-out); }
+  .mg .hov:hover .hov-icon { scale: 1.35; rotate: -10deg; }
+
+  .mg .hov-card { position: relative; transition: translate 200ms var(--ease-out), box-shadow 200ms var(--ease-out), border-color 150ms ease; }
+  /* fills the strip the card leaves behind, so the bottom edge doesn't flicker */
+  .mg .hov-card::after { content: ''; position: absolute; inset: 100% -3px auto; height: 14px; }
+  .mg .hov-card:hover { z-index: 5; translate: -5px -10px; border-color: var(--spot); box-shadow: 10px 12px 0 var(--spot); }
+  .mg .hov-card .vs { transition: scale 200ms var(--ease-out), rotate 200ms var(--ease-out); }
+  .mg .hov-card:hover .vs { scale: 1.4; rotate: 6deg; }
+
+  .mg .hov-thumb > span:first-child { transition: translate 180ms var(--ease-out), box-shadow 180ms var(--ease-out), border-color 150ms ease; }
+  .mg .hov-thumb:hover > span:first-child { translate: -3px -8px; border-color: var(--spot); box-shadow: 6px 8px 0 var(--spot); }
+
+  .mg .hov-row { transition: translate 180ms var(--ease-out), background-color 150ms ease, box-shadow 180ms var(--ease-out); }
+  .mg .hov-row:hover { translate: 8px 0; background: color-mix(in oklab, var(--spot) 18%, var(--panel)); box-shadow: inset 6px 0 0 var(--spot); }
+
+  .mg .hov-tile > span { transition: translate 200ms var(--ease-out), scale 200ms var(--ease-out); transform-origin: left; }
+  .mg .hov-tile:hover { background: var(--spot); color: #fff; }
+  .mg .hov-tile:hover .muted { color: #fff; }
+  .mg .hov-tile:hover > span:first-child { translate: 0 -5px; scale: 1.14; }
+
+  .mg .btn-spot:hover:not(:disabled) { background: #b01a13; }
+  .mg .btn:not([aria-pressed="true"]):not([aria-selected="true"]):hover:not(:disabled) { background: color-mix(in oklab, var(--ink) 12%, var(--panel)); }
+  .mg :is(.btn, .btn-spot):hover:not(:disabled, :active) { translate: -2px -3px; box-shadow: 4px 5px 0 var(--line); }
+  .mg .toc:hover { background: color-mix(in oklab, var(--ink) 10%, var(--panel)); }
+
+  .mn-side .mn-item :is(svg, .mn-text) { transition: translate 180ms var(--ease-out), scale 180ms var(--ease-out), rotate 180ms var(--ease-out); }
+  .mn-side .mn-item:hover svg { scale: 1.3; rotate: -8deg; }
+  .mn-side .mn-item:hover .mn-text { translate: 7px 0; }
+}
+
+/* Home on a large screen: everything on one screen. Shorter windows than this scroll as usual. */
+@media (min-width: 1024px) and (min-height: 600px) {
+  .mg.fit-desktop { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; padding-bottom: 12px; }
+  .mg.fit-desktop > .shell { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .mg.fit-desktop .home-grid { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1.15fr) minmax(0, 1fr) auto; }
+}
+
+/* one quiet entrance, panel by panel in reading order */
+.mg .arrive { animation: appear 320ms var(--ease-out) backwards; animation-delay: calc(min(var(--i, 0), 8) * 60ms); }
+
+/* avatar picker */
+.picker {
+  margin: auto; width: min(720px, calc(100vw - 24px)); max-height: 85dvh; padding: 0;
+  background: var(--panel); color: var(--ink); border: 3px solid var(--line);
+}
+.picker[open] { display: flex; flex-direction: column; animation: pop-in 180ms var(--ease-out); }
+.picker::backdrop { background: rgb(0 0 0 / 0.7); }
+.picker .poster { font-family: var(--font-poster), Impact, sans-serif; text-transform: uppercase; }
+
+/* shared navigation: no outlines, only fills; the current page is a cut red block */
+.mn { color: var(--ink); }
+.mn-side { background: var(--panel); border-right: 3px solid var(--line); }
+.mn-bar { background: var(--panel); border-top: 3px solid var(--line); }
+.mn-sheet { background: var(--panel); border: 3px solid var(--line); }
+.mn-item { color: var(--muted); transition: background-color 150ms ease, color 150ms ease; }
+.mn-item svg { flex-shrink: 0; }
+.mn-text { font-family: var(--font-poster), Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.03em; line-height: 1; }
+.mn-item[aria-current="page"], .mn-item[data-on="true"] { background: var(--spot); color: #fff; }
+.mn-side .mn-item[aria-current="page"] { clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%); }
+.mn-item:focus-visible { outline: 3px solid var(--spot-text); outline-offset: -3px; }
+.mn [role="radiogroup"] { background: color-mix(in oklab, var(--ink) 9%, transparent); border-radius: 0; }
+.mn [role="radio"] { color: var(--muted); border-radius: 0; }
+.mn [role="radio"][aria-checked="true"] { background: var(--ink); color: var(--paper); }
+.mn-side svg path[fill="#F59E0B"], .mg svg path[fill="#F59E0B"] { fill: var(--spot); }
+@media (hover: hover) and (pointer: fine) {
+  .mn-item:not([aria-current="page"]):hover { color: var(--ink); background: color-mix(in oklab, var(--ink) 9%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg .arrive { animation-delay: 0ms; }
+  /* colour changes stay, movement goes */
+  .mg :is(.hov, .btn, .btn-spot):is(:hover, :active), .mg .hov:hover .hov-icon, .mg .hov-card:hover .vs,
+  .mg .hov-tile:hover > span, .mn-item:hover :is(svg, .mn-text), button.art:hover img, button:hover .art img, .mg .hov-card:hover img, .mg .panel.art:hover img, .mg li.art:hover img { scale: none !important; rotate: none !important; }
+  .mg :is(.hov-card, .hov-row, .btn, .btn-spot):hover, .mg .hov-thumb:hover > span:first-child,
+  .mg .hov-tile:hover > span, .mn-item:hover .mn-text { translate: none !important; }
+}

@@ -1,9 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import BottomNav from './BottomNav'
+import { Screen, PageHead } from './Manga'
 import '../app/games/games.css'
-import Icon from './Icon'
 
 // the engine is plain JS shared by all games; load it once and reuse it across client navigations
 let engine
@@ -19,7 +17,6 @@ const loadEngine = () => engine || (engine = new Promise((resolve, reject) => {
 export default function GamePage({ game }) {
   const mount = useRef(null)
   const [failed, setFailed] = useState(false)
-  const router = useRouter()
 
   useEffect(() => {
     const el = mount.current
@@ -35,21 +32,14 @@ export default function GamePage({ game }) {
   }, [game.slug])
 
   return (
-    <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-5 max-w-3xl mx-auto enter">
-        <button onClick={() => router.push('/games')} className="press label text-zinc-500 mb-4 flex items-center gap-1.5 min-h-8"><Icon name="back" size={16} /> Games</button>
-        <p className="text-amber-500 label mb-1">{game.tag}</p>
-        <h1 className="display text-3xl">{game.title}</h1>
-        <p className="text-zinc-500 text-sm mt-1 leading-relaxed">{game.blurb}</p>
-      </div>
+    <Screen nav="games" width="max-w-3xl">
+      <PageHead title={game.title} sub={game.blurb} back="/games" backLabel="Games" />
 
-      <div className="ux px-5 max-w-3xl mx-auto enter" style={{ '--i': 1 }}>
+      <div className="ux box arrive p-3 sm:p-5" style={{ '--i': 1 }}>
         {failed
-          ? <p className="text-zinc-500 text-sm">This game couldn&apos;t load. Check your connection and refresh.</p>
+          ? <p className="muted text-sm">This game couldn&apos;t load. Check your connection and refresh.</p>
           : <div ref={mount} className="ux-app" />}
       </div>
-
-      <BottomNav active="games" />
-    </div>
+    </Screen>
   )
 }

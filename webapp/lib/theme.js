@@ -14,7 +14,7 @@ export function applyMode(mode) {
   root.classList.add('theme-switching')
   root.dataset.mode = mode
   root.dataset.theme = resolve(mode)
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', root.dataset.theme === 'light' ? '#ffffff' : '#000000')
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', root.dataset.theme === 'light' ? '#e9e4d6' : '#0d0c0b')
   void root.offsetHeight // let the swap paint before transitions come back
   requestAnimationFrame(() => root.classList.remove('theme-switching'))
 }

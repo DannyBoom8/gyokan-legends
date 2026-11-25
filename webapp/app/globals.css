@@ -2,11 +2,24 @@
 
 @theme {
   --font-display: var(--font-display-face), var(--font-geist), system-ui, sans-serif;
-  /* zinc-500 lifted so secondary text passes 4.5:1 on black AND on zinc-900 cards */
-  --color-zinc-500: oklch(0.7 0.012 286);
 
-  /* text on an orange fill is always black, in both themes */
-  --color-on-accent: #000;
+  /* the Tailwind names stay, the values are the manga tokens in manga.css: black is the page, white is the ink */
+  --color-black: var(--paper);
+  --color-white: var(--ink);
+  --color-zinc-50: var(--ink);
+  --color-zinc-100: var(--ink);
+  --color-zinc-200: var(--ink);
+  --color-zinc-300: var(--ink);
+  --color-zinc-400: var(--muted);
+  --color-zinc-500: var(--muted);
+  --color-zinc-600: color-mix(in oklab, var(--ink) 45%, var(--panel));
+  --color-zinc-700: color-mix(in oklab, var(--ink) 32%, var(--panel));
+  --color-zinc-800: color-mix(in oklab, var(--ink) 16%, var(--panel));
+  --color-zinc-900: var(--panel);
+  --color-zinc-950: var(--panel);
+  --color-amber-400: var(--spot-text);
+  --color-amber-500: var(--spot);
+  --color-on-accent: #fff;
 }
 
 :root {
@@ -36,10 +49,9 @@ h1, h2, h3 { text-wrap: balance; }
 p { text-wrap: pretty; }
 
 .display {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.005em;
-  line-height: 1.1;
+  font-family: var(--font-poster), Impact, sans-serif;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
   text-transform: uppercase;
 }
 .label {
@@ -52,10 +64,9 @@ p { text-wrap: pretty; }
   white-space: nowrap;
 }
 .num {
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-family: var(--font-poster), Impact, sans-serif;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
+  letter-spacing: 0.01em;
   line-height: 1;
 }
 .hud {
@@ -69,7 +80,6 @@ p { text-wrap: pretty; }
   text-transform: uppercase;
   white-space: nowrap;
   padding: 0.3rem 0.7rem;
-  border-radius: 999px;
 }
 
 .scrollbar-hide {
@@ -159,7 +169,6 @@ img:not([aria-hidden]) {
   position: relative;
   overflow: hidden;
   background: var(--color-zinc-800);
-  border-radius: 12px;
 }
 .skeleton::after {
   content: '';
@@ -217,46 +226,6 @@ img:not([aria-hidden]) {
 .ping { animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite; }
 
 
-/* battle look: clipped "fighter card" frames, clash entrances, victory glow */
-.cut {
-  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
-}
-.cut-sm {
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
-}
-.frame { background: var(--frame, var(--color-zinc-800)); padding: 1px; }
-.frame > .inner { background: var(--color-zinc-950); }
-.stamp { clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
-@keyframes slide-l { from { opacity: 0; translate: -36px 0; } }
-@keyframes slide-r { from { opacity: 0; translate: 36px 0; } }
-@keyframes vs-pop {
-  0% { opacity: 0; scale: 2.4; }
-  60% { opacity: 1; scale: 0.9; }
-  100% { scale: 1; }
-}
-@keyframes stamp-in {
-  0% { opacity: 0; scale: 1.8; rotate: -6deg; }
-  100% { opacity: 1; scale: 1; rotate: 0deg; }
-}
-@keyframes sweep { from { translate: -120% 0; } to { translate: 220% 0; } }
-@keyframes breathe { 50% { opacity: 0.55; } }
-.slide-l { animation: slide-l 420ms var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 8) * 70ms); }
-.slide-r { animation: slide-r 420ms var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 8) * 70ms); }
-.vs-pop { animation: vs-pop 420ms var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 8) * 70ms + 200ms); }
-.stamp-in { animation: stamp-in 260ms var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 8) * 70ms + 450ms); }
-.shine { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.shine::after {
-  content: ''; position: absolute; inset: 0 auto 0 0; width: 40%;
-  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.14), transparent);
-  animation: sweep 900ms var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 8) * 70ms + 500ms);
-}
-.edge-glow { box-shadow: 0 0 14px var(--tc); animation: breathe 3.2s ease-in-out infinite; }
-@media (hover: hover) and (pointer: fine) {
-  .lift { transition: translate 150ms var(--ease-out); }
-  .lift:hover { translate: 0 -2px; }
-}
-
-
 @keyframes pop-in { from { opacity: 0; scale: 0.96; translate: 0 6px; } }
 .pop-in { animation: pop-in 180ms var(--ease-out) both; }
 @keyframes sheet-in { from { translate: 0 24px; opacity: 0; } }
@@ -265,18 +234,8 @@ img:not([aria-hidden]) {
 @media (min-width: 768px) {
   body.has-sidebar { padding-left: 15rem; }
 }
-.arena {
-  background:
-    radial-gradient(ellipse at 50% 0%, color-mix(in oklab, var(--color-amber-500) 12%, transparent), transparent 60%),
-    repeating-linear-gradient(0deg, transparent 0 47px, color-mix(in oklab, var(--color-zinc-500) 9%, transparent) 47px 48px),
-    repeating-linear-gradient(90deg, transparent 0 47px, color-mix(in oklab, var(--color-zinc-500) 9%, transparent) 47px 48px);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .pop-in { animation-name: appear; }
-  .slide-l, .slide-r, .vs-pop, .stamp-in { animation-name: appear; animation-delay: 0ms; }
-  .shine::after, .edge-glow { animation: none; }
-  .lift:hover { translate: none; }
   .skeleton::after,
   .icon-float,
   .icon-glow,
@@ -305,26 +264,10 @@ img:not([aria-hidden]) {
   }
 }
 
-/* Light theme. Dark is the default above; the inline script in layout.js sets data-theme on <html>
-   (light, dark, or whichever the device prefers when the mode is Auto).
-   Components keep their zinc / black / white class names: the ramp is flipped here, so
-   black is the page and white is the ink. Orange text steps down to a darker orange for contrast. */
+/* Light theme. Dark is the default; the inline script in layout.js sets data-theme on <html>
+   (light, dark, or whichever the device prefers when the mode is Auto). */
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-black: oklch(1 0 0);
-  --color-white: oklch(0.141 0.005 286);
-  --color-zinc-50: oklch(0.141 0.005 286);
-  --color-zinc-100: oklch(0.21 0.006 286);
-  --color-zinc-200: oklch(0.274 0.006 286);
-  --color-zinc-300: oklch(0.37 0.013 286);
-  --color-zinc-400: oklch(0.5 0.016 286);
-  --color-zinc-500: oklch(0.45 0.014 286);
-  --color-zinc-600: oklch(0.705 0.015 286);
-  --color-zinc-700: oklch(0.871 0.006 286);
-  --color-zinc-800: oklch(0.92 0.004 286);
-  --color-zinc-900: oklch(0.967 0.001 286);
-  --color-zinc-950: oklch(0.985 0 0);
-  --color-amber-400: oklch(0.555 0.163 48.4);
   --color-red-400: oklch(0.505 0.213 27.5);
   --color-green-400: oklch(0.527 0.154 150);
   --color-blue-400: oklch(0.488 0.243 264);
@@ -333,9 +276,7 @@ img:not([aria-hidden]) {
   --color-yellow-400: oklch(0.554 0.135 66);
   --color-pink-400: oklch(0.525 0.223 3.9);
 }
-:root[data-theme="light"] .text-amber-500 { color: oklch(0.555 0.163 48.4); }
 :root[data-theme="light"] .skeleton::after { background: linear-gradient(100deg, transparent 20%, oklch(1 0 0 / 0.7) 50%, transparent 80%); }
-:root[data-theme="light"] .scrim { background-color: oklch(0.145 0 0 / 0.35); }
 
 /* theme switch: no colour transitions while everything repaints at once */
 .theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }

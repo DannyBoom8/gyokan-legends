@@ -2,14 +2,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
-import BottomNav from '../../components/BottomNav'
 import PageSkeleton from '../../components/Skeleton'
 import { formatPoints, rankInfo } from '../../lib/game'
 import Icon from '../../components/Icon'
+import { Screen, PageHead, Panel } from '../../components/Manga'
+import { fetchAvatars, avatarFor } from '../../lib/avatar'
 
 export default function Leaderboard() {
   const [rows, setRows] = useState([])
   const [me, setMe] = useState(null)
+  const [avatars, setAvatars] = useState([])
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -18,6 +20,7 @@ export default function Leaderboard() {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
+      fetchAvatars().then(setAvatars)
 
       const [{ data: board, error: err }, { data: profile }] = await Promise.all([
         supabase.from('leaderboard').select('*').order('season_points', { ascending: false }).limit(100),
@@ -33,43 +36,39 @@ export default function Leaderboard() {
 
   if (loading) return <PageSkeleton variant="list" />
 
-  const medalTone = ['text-amber-400', 'text-zinc-300', 'text-orange-400']
-
   return (
-    <div className="min-h-screen bg-black text-white pb-28">
-      <div className="px-5 pt-14 pb-6 enter">
-        <h1 className="display text-3xl">Leaderboard</h1>
-        <p className="text-zinc-500 text-sm mt-1">Season points · top 100</p>
-      </div>
+    <Screen nav="leaderboard" width="max-w-3xl">
+      <PageHead title="Leaderboard" sub="Season points · top 100" />
 
-      {error ? (
-        <p className="px-5 text-zinc-500 text-sm">The leaderboard isn&apos;t set up yet.</p>
-      ) : rows.length === 0 ? (
-        <p className="px-5 text-zinc-500 text-sm">No players yet.</p>
+      {error || rows.length === 0 ? (
+        <p className="box muted text-sm px-5 py-10 text-center">{error ? 'The leaderboard isn’t set up yet.' : 'No players yet.'}</p>
       ) : (
-        <div className="px-5 flex flex-col gap-2">
-          {rows.map((r, i) => {
-            const rank = rankInfo(r.current_rank)
-            const isMe = r.username === me
-            return (
-              <div key={r.username} style={{ '--i': i + 1 }}
-                className={`enter rounded-2xl border p-3 flex items-center gap-3 ${isMe ? 'border-amber-500/40 bg-amber-500/5' : 'border-zinc-800 bg-zinc-900'}`}>
-                <span className={`w-8 flex justify-center num text-base ${medalTone[i] || 'text-zinc-500'}`}>{i < 3 ? <Icon name="medal" size={22} className="icon-in" style={{ '--i': i }} /> : i + 1}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">
-                    {r.username}{isMe && <span className="text-amber-500 text-xs"> · you</span>}
-                    {r.is_legend && <Icon name="crown" size={13} className="inline ml-1.5 -mt-0.5 text-amber-400" />}
-                  </p>
-                  <p className={`label !tracking-[0.1em] mt-1 ${rank.color}`}>{rank.name}</p>
-                </div>
-                <p className="num text-lg text-white">{formatPoints(r.season_points)}</p>
-              </div>
-            )
-          })}
-        </div>
+        <Panel i={1}>
+          <ol className="divide-y-[3px] divide-[var(--line)]">
+            {rows.map((r, i) => {
+              const rank = rankInfo(r.current_rank)
+              const isMe = r.username === me
+              return (
+                <li key={r.username} aria-current={isMe ? 'true' : undefined}
+                  className={`hov-row art flex items-center gap-3 p-3 ${isMe ? 'bg-[color-mix(in_oklab,var(--spot)_20%,var(--panel))]' : ''}`}>
+                  <span className={`poster text-2xl w-11 h-11 flex items-center justify-center flex-shrink-0 ${i < 3 ? 'bg-[var(--spot)] text-white' : 'muted'}`}>{i + 1}</span>
+                  <span className="block overflow-hidden border-2 border-[var(--line)] flex-shrink-0">
+                    <img src={avatarFor(avatars, r.username, r.avatar_character_id)?.image_url} alt="" loading="lazy" className="block w-11 h-[52px] object-cover object-top" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="poster text-xl truncate">
+                      {r.username}
+                      {r.is_legend && <><Icon name="crown" size={16} className="inline ml-1.5 -mt-1" /><span className="sr-only"> Legend</span></>}
+                    </p>
+                    <p className={`label !tracking-[0.1em] mt-1.5 ${rank.color}`}>{rank.name}{isMe && <span className="text-white"> · you</span>}</p>
+                  </div>
+                  <p className="poster text-3xl">{formatPoints(r.season_points)}<span className="sr-only"> season points</span></p>
+                </li>
+              )
+            })}
+          </ol>
+        </Panel>
       )}
-
-      <BottomNav active="leaderboard" />
-    </div>
+    </Screen>
   )
 }

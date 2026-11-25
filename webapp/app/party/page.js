@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../lib/supabase'
-import BottomNav from '../../components/BottomNav'
 import Icon from '../../components/Icon'
+import { Screen, PageHead, Caption } from '../../components/Manga'
 import PageSkeleton from '../../components/Skeleton'
 import { BUDGET, SLOT_DEFS, POWER_HEX, formatGold } from '../../lib/game'
 
@@ -80,65 +80,78 @@ export default function Party() {
 
 
   const STATS = [['STR', 'strength'], ['SPD', 'speed'], ['DEF', 'defence'], ['TEC', 'technique'], ['MAG', 'magic'], ['IQ', 'iq'], ['AUR', 'aura']]
-  let tokenN = 0
-  const token = (def, i) => {
+  // `place` says which way the desktop popover opens, so it never leaves the screen
+  const frame = 'absolute top-0 h-full left-1/2 -translate-x-1/2 aspect-square md:aspect-[4/5] max-w-full'
+  const token = (def, i, place) => {
     const slot = slots.filter(x => x.slot_type === def.type)[i]
     const c = slot?.characters
-    const n = tokenN++
+    const medic = def.type === 'Medic'
+    const cell = 'relative flex flex-col justify-center min-h-0 w-[min(28%,10.5rem)]'
+    const tall = 'w-full h-full max-h-[14rem] flex flex-col gap-1'
     if (!slot) return (
-      <button key={`${def.type}-${i}`} onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
-        className={`enter press flex flex-col items-center gap-1.5 w-[88px] sm:w-[104px] ${def.color}`} style={{ '--i': n }}>
-        <span className="cut-sm w-[72px] h-[72px] sm:w-[88px] sm:h-[88px] border border-dashed border-current/50 flex items-center justify-center"
-          style={{ backgroundImage: 'repeating-linear-gradient(135deg, color-mix(in oklab, currentColor 8%, transparent) 0 8px, transparent 8px 16px)' }}>
-          <Icon name="plus" size={24} />
-        </span>
-        <span className="label !text-[0.6875rem]">Recruit</span>
-      </button>
+      <div key={`${def.type}-${i}`} className={cell}>
+        <button onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
+          aria-label={`Recruit ${def.type}`} className={`hov-thumb press ${tall}`}>
+          <span className="relative flex-1 min-h-0">
+            <span className={`${frame} border-2 border-dashed border-[var(--line)] bg-[var(--panel)] flex items-center justify-center muted`}>
+              <Icon name="plus" size={24} />
+            </span>
+          </span>
+          <span className="label muted !text-[0.625rem] block truncate">{def.type}</span>
+        </button>
+      </div>
     )
     const tc = POWER_HEX[c?.power_type] || '#71717a'
     const open = active === slot.id
     return (
-      <div key={slot.id} className="relative" style={{ '--tc': tc }}
+      <div key={slot.id} className={cell} style={{ '--tc': tc }}
         onMouseEnter={() => canHover() && setActive(slot.id)}
         onMouseLeave={() => canHover() && setActive(a => a === slot.id ? null : a)}>
         <button onClick={() => setActive(a => (a === slot.id && !canHover()) ? null : slot.id)} aria-expanded={open}
           onFocus={() => canHover() && setActive(slot.id)}
-          className="enter press lift flex flex-col items-center gap-1.5 w-[88px] sm:w-[104px]" style={{ '--i': n }}>
-          <span className="relative cut-sm p-[3px]" style={{ background: `linear-gradient(160deg, ${tc}, ${tc}22)`, boxShadow: open ? `0 0 22px ${tc}88` : 'none' }}>
-            <img src={c?.image_url} alt="" className="cut-sm w-[72px] h-[72px] sm:w-[88px] sm:h-[88px] object-cover object-top bg-zinc-800" />
-            <span className="display absolute -right-0.5 -bottom-0.5 text-[12px] leading-none px-1.5 py-[3px] text-on-accent num" style={{ background: tc }}>{c?.overall}</span>
+          aria-label={`${c?.name}, ${def.type}, rated ${c?.overall}`}
+          className={`art hov-thumb press ${tall}`}>
+          <span className="relative flex-1 min-h-0">
+            <span className={`${frame} border-[3px] bg-[var(--panel)] ${open ? 'border-[var(--spot)]' : 'border-[var(--line)]'}`}>
+            <span className="absolute inset-0 overflow-hidden">
+              <img src={c?.image_url} alt="" className="w-full h-full object-cover object-top" />
+            </span>
+            <span className="absolute inset-x-0 top-0 h-1.5" style={{ background: tc }} />
+            {medic && <span className="label !text-[0.5625rem] absolute left-0 top-1.5 bg-green-600 text-white px-1.5 py-0.5">Medic</span>}
+            <span className="tag poster text-sm right-0 bottom-0">{c?.overall}</span>
+            </span>
           </span>
-          <span className="display text-[11px] sm:text-xs uppercase leading-tight text-center line-clamp-2 max-w-full">{c?.name}</span>
+          <span className="poster text-xs sm:text-sm block text-center truncate">{c?.name}</span>
         </button>
         {open && (
           <>
-            <div className="fixed inset-0 z-[55] bg-black/60 md:hidden" onClick={() => setActive(null)} />
+            <div className="fixed inset-0 z-[55] bg-[rgb(0_0_0/0.65)] md:hidden" onClick={() => setActive(null)} />
             <div role="dialog" aria-label={c?.name}
-              className="pop-in fixed inset-x-3 bottom-3 z-[60] pb-safe md:absolute md:inset-x-auto md:bottom-auto md:top-full md:pb-0 md:mt-1 md:left-1/2 md:-translate-x-1/2 md:w-72 md:z-40">
-              <div className="frame cut" style={{ '--frame': `color-mix(in oklab, ${tc} 50%, var(--color-zinc-800))` }}>
-                <div className="inner cut p-4" style={{ background: `linear-gradient(160deg, color-mix(in oklab, ${tc} 16%, var(--color-zinc-950)), var(--color-zinc-950) 60%)` }}>
-                  <div className="flex gap-3">
-                    <img src={c?.image_url} alt="" className="cut-sm w-16 h-16 object-cover object-top bg-zinc-800 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <p className="display uppercase leading-tight">{c?.name}</p>
-                      <p className="text-zinc-500 text-xs truncate">{c?.anime_title}</p>
-                      <p className="label !text-[0.6875rem] mt-1.5" style={{ color: tc }}>{c?.power_type} · OVR {c?.overall} · {formatGold(c?.gold_cost)}</p>
+              className={`pop-in fixed inset-x-3 bottom-3 z-[60] pb-safe md:absolute md:inset-auto md:w-72 md:z-40 md:pb-0
+                ${place.right ? 'md:left-full md:pl-2' : 'md:right-full md:pr-2'} ${place.top ? 'md:top-0' : 'md:bottom-0'}`}>
+              <div className="box p-4">
+                <div className="flex gap-3">
+                  <img src={c?.image_url} alt="" className="w-16 h-20 object-cover object-top border-2 border-[var(--line)] flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="poster text-xl">{c?.name}</p>
+                    <p className="muted text-xs truncate mt-1">{c?.anime_title}</p>
+                    <p className="label type-text !text-[0.6875rem] mt-2 !whitespace-normal">{c?.power_type} · OVR {c?.overall} · {formatGold(c?.gold_cost)}</p>
+                    <p className="label muted !text-[0.625rem] mt-1">{def.type} · {def.points} pts / win</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-7 gap-1 mt-3">
+                  {STATS.map(([lab, key]) => (
+                    <div key={key} className="flex flex-col items-center gap-1">
+                      <div className="h-10 w-full bg-zinc-800 flex items-end"><div className="w-full" style={{ height: `${c?.[key] ?? 0}%`, background: tc }} /></div>
+                      <span className="num text-xs">{c?.[key]}</span>
+                      <span className="label muted !text-[0.5625rem] !tracking-[0.06em]">{lab}</span>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-7 gap-1 mt-3.5">
-                    {STATS.map(([lab, key]) => (
-                      <div key={key} className="flex flex-col items-center gap-1">
-                        <div className="h-12 w-full bg-zinc-900 flex items-end"><div className="w-full" style={{ height: `${c?.[key] ?? 0}%`, background: tc }} /></div>
-                        <span className="num text-[11px] leading-none">{c?.[key]}</span>
-                        <span className="label !text-[0.5625rem] !tracking-[0.06em]">{lab}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mt-4">
-                    <button onClick={() => router.push(`/character?id=${slot.character_id}`)} className="press label !text-[0.75rem] bg-amber-500 text-on-accent py-2.5 cut-sm">Profile</button>
-                    <button onClick={() => change(slot, def)} disabled={removing === slot.id} className="press label !text-[0.75rem] border border-zinc-700 py-2.5 disabled:opacity-40">Change</button>
-                    <button onClick={() => { removeCharacter(slot.id); setActive(null) }} className="press label !text-[0.75rem] border border-zinc-700 text-red-400 py-2.5">Remove</button>
-                  </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <button onClick={() => router.push(`/character?id=${slot.character_id}`)} className="btn-spot press text-base py-2.5">Profile</button>
+                  <button onClick={() => change(slot, def)} disabled={removing === slot.id} className="btn text-base py-2.5">Change</button>
+                  <button onClick={() => { removeCharacter(slot.id); setActive(null) }} className="btn text-base py-2.5">Remove</button>
                 </div>
               </div>
             </div>
@@ -148,148 +161,99 @@ export default function Party() {
     )
   }
 
-  const row = (type, label) => {
-    const def = SLOT_DEFS.find(d => d.type === type)
-    return (
-      <div key={type} className="flex flex-col items-center gap-3">
-        <p className={`label !text-[0.6875rem] ${def.color}`}>{label} · {def.points} pts / win</p>
-        <div className="flex justify-center gap-3 sm:gap-6">
-          {Array.from({ length: def.count }, (_, i) => token(def, i))}
-        </div>
-      </div>
-    )
-  }
+  // four rows, front to bench; the medic stands between the two supports
+  const LINEUP = [
+    ['Champions', [['Champion', 0], ['Champion', 1]]],
+    ['Specialists', [['Specialist', 0], ['Specialist', 1], ['Specialist', 2]]],
+    ['Support', [['Support', 0], ['Medic', 0], ['Support', 1]]],
+    ['Bench', [['Sub', 0], ['Sub', 1]]],
+  ]
 
+  // not a Panel: a clipped parent would cut off the fighter popover
   const formationView = (
-    <div className="relative">
-      <div className="arena absolute inset-0 border border-zinc-800 cut" aria-hidden="true" />
-      <div className="relative flex flex-col gap-7 py-7 px-3 sm:py-9">
-        {row('Champion', 'Front line · Champions')}
-        {row('Specialist', 'Strike · Specialists')}
-        {row('Support', 'Wings · Support')}
-        {row('Medic', 'Medic · cascade')}
-        <div className="border-t border-dashed border-zinc-800 pt-6 mx-4">{row('Sub', 'Bench · Subs')}</div>
-      </div>
+    <div className="box arrive relative flex-1 min-h-0 grid grid-rows-4 gap-1.5 p-2" style={{ '--i': 1 }}>
+      <div className="tone absolute inset-0" aria-hidden="true" />
+      {LINEUP.map(([label, cells], r) => (
+        <div key={label} className={`relative flex justify-center items-stretch gap-2 sm:gap-5 min-h-0 ${label === 'Bench' ? 'border-t-2 border-dashed border-[var(--line)] pt-1.5' : ''}`}>
+          <p className="label muted !text-[0.5625rem] absolute left-0 inset-y-0 w-3 flex items-center justify-center rotate-180 [writing-mode:vertical-rl]">{label}</p>
+          {cells.map(([type, i], n) => token(SLOT_DEFS.find(d => d.type === type), i, { right: n < cells.length / 2, top: r < 2 }))}
+        </div>
+      ))}
     </div>
   )
 
   if (loading) return <PageSkeleton variant="cards" />
 
+  const over = goldRemaining < 0
+
   return (
-    <div className="min-h-screen bg-black text-white pb-28 md:pb-12"><div className="md:max-w-6xl md:mx-auto">
-      <div className="px-5 md:px-8 pt-14 pb-4 enter flex items-end justify-between gap-4">
-        <div>
-          <h1 className="display text-3xl md:text-4xl uppercase">My Party</h1>
-          <p className="text-zinc-500 text-sm mt-1">Build your roster of 10 characters</p>
-        </div>
-        <div className="flex bg-zinc-900 p-1 rounded-xl" role="tablist" aria-label="Party view">
-          {[['formation', 'Formation'], ['list', 'List']].map(([id, lab]) => (
-            <button key={id} role="tab" aria-selected={view === id} onClick={() => { setView(id); setActive(null) }}
-              className={`label !text-[0.75rem] px-3.5 py-2 rounded-lg transition-colors duration-150 ${view === id ? 'bg-amber-500 text-on-accent' : 'text-zinc-500'}`}>{lab}</button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ '--i': 1 }} className="enter mx-5 md:mx-8 mb-5 bg-zinc-900 border border-zinc-800 border-t-2 border-t-amber-500 cut-sm p-4 flex items-center justify-between">
-        <div>
-          <p className="label text-zinc-500 mb-1.5">Gold left</p>
-          <p className={`num text-2xl ${goldRemaining < 0 ? 'text-red-400' : 'text-amber-400'}`}>
-            {formatGold(goldRemaining)}
+    <Screen nav="party" fit={view === 'formation' ? 'always' : undefined}>
+      <PageHead compact title="My Party" aside={
+        <div className="flex items-center gap-1.5">
+          <p className={`label border-2 px-2 py-2 ${over ? 'bg-[var(--spot)] border-[var(--spot)] text-white' : 'border-[var(--line)]'}`}>
+            {over ? `Over by ${formatGold(-goldRemaining)}` : `${formatGold(goldRemaining)} gold`}
           </p>
+          <p className="label border-2 border-[var(--line)] px-2 py-2">{slots.length}/10<span className="sr-only"> slots filled</span></p>
+          <button aria-pressed={view === 'list'} onClick={() => { setView(view === 'list' ? 'formation' : 'list'); setActive(null) }}
+            className="btn text-sm px-3 py-2">List</button>
         </div>
-        <div className="w-px h-8 bg-zinc-800" />
-        <div className="text-right">
-          <p className="label text-zinc-500 mb-1.5">Slots</p>
-          <p className="num text-2xl text-white">{slots.length} / 10</p>
-        </div>
-        <div className="w-px h-8 bg-zinc-800" />
-        <div className="text-right">
-          <p className="label text-zinc-500 mb-1.5">Spent</p>
-          <p className="num text-2xl text-zinc-400">{formatGold(totalGoldSpent)}</p>
-        </div>
-      </div>
+      } />
+      {over && <p role="status" className="label !whitespace-normal mb-2" style={{ color: 'var(--spot-text)' }}>Over budget: this party won&apos;t score on battle night</p>}
 
-      <div className="mx-5 md:mx-8 -mt-3 mb-5 h-2 bg-zinc-900 border border-zinc-800 overflow-hidden" aria-hidden="true">
-        <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 origin-left transition-[scale] duration-500 ease-out" style={{ scale: `${Math.min(100, Math.max(0, (totalGoldSpent / BUDGET) * 100)) / 100} 1`, boxShadow: '0 0 12px rgb(245 158 11 / 0.5)' }} />
-      </div>
-
-      {goldRemaining < 0 && (
-        <p className="mx-5 md:mx-8 -mt-2 mb-5 text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-          Over budget: this party won&apos;t score on battle night. Swap someone for a cheaper pick.
-        </p>
-      )}
-
-      <div className="px-5 md:px-8">{view === 'formation' && formationView}</div>
-      {view === 'list' && <div className="px-5 md:px-8 grid md:grid-cols-2 gap-5 items-start">
-        {SLOT_DEFS.map((def, defIndex) => {
-          const filled = slots.filter(s => s.slot_type === def.type)
-          return (
-            <div key={def.type} className="enter" style={{ '--i': defIndex + 2 }}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className={`display text-base uppercase border-l-4 border-current pl-2.5 leading-none ${def.color}`}>{def.type}</span>
-                  <span className="label text-zinc-500 !tracking-[0.08em]">{filled.length}/{def.count}</span>
-                  {def.type === 'Medic' && (
-                    <span className="hud !py-0.5 !px-2 text-green-500 border border-green-500/30">cascade</span>
-                  )}
-                </div>
-                <span className="label text-zinc-500 !tracking-[0.08em]">{def.points} pts / win</span>
+      {view === 'formation' && formationView}
+        {view === 'list' && <div className="grid md:grid-cols-2 gap-3 items-start">
+          {SLOT_DEFS.map((def, defIndex) => {
+            const filled = slots.filter(s => s.slot_type === def.type)
+            return (
+              <div key={def.type} className="box arrive" style={{ '--i': defIndex + 2 }}>
+                <Caption aside={`${def.points} pts / win`}>{def.type} {filled.length}/{def.count}</Caption>
+                <ul className="divide-y-2 divide-current/20 px-3 pb-1">
+                  {Array.from({ length: def.count }).map((_, i) => {
+                    const slot = filled[i]
+                    const tc = POWER_HEX[slot?.characters?.power_type] || '#71717a'
+                    return (
+                      <li key={slot?.id ?? `empty-${i}`} className="hov-row py-3 px-2">
+                        {slot ? (
+                          <div className="flex items-center gap-3" style={{ '--tc': tc }}>
+                            <button onClick={() => router.push(`/character?id=${slot.character_id}`)}
+                              className="art press flex-1 min-w-0 flex items-center gap-3 text-left">
+                              <span className="relative flex-shrink-0 block border-2 border-[var(--line)]">
+                                <span className="block overflow-hidden">
+                                  <img src={slot.characters?.image_url} alt="" className="block w-[68px] h-[68px] object-cover object-top" />
+                                </span>
+                                <span className="tag poster text-sm right-0 bottom-0">{slot.characters?.overall ?? '—'}</span>
+                              </span>
+                              <span className="flex-1 min-w-0">
+                                <span className="poster block text-lg truncate">{slot.characters?.name}</span>
+                                <span className="block muted text-xs truncate mt-1">{slot.characters?.anime_title}</span>
+                                <span className="label type-text block mt-2 !text-[0.6875rem]">{slot.characters?.power_type || '—'}</span>
+                              </span>
+                            </button>
+                            <div className="self-stretch flex flex-col items-end justify-between flex-shrink-0">
+                              <p className="poster text-lg">{formatGold(slot.characters?.gold_cost)}</p>
+                              <button onClick={() => removeCharacter(slot.id)} disabled={removing === slot.id}
+                                className="btn text-sm px-2.5 py-2">
+                                {removing === slot.id ? '…' : 'Remove'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
+                            className="toc press w-full flex items-center gap-3 text-left min-h-[72px]">
+                            <span className="w-[72px] h-[72px] border-2 border-dashed border-[var(--line)] flex items-center justify-center muted flex-shrink-0">
+                              <Icon name="plus" size={26} />
+                            </span>
+                            <span className="poster text-lg muted">Recruit {def.type}</span>
+                          </button>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
               </div>
-
-              <div className="flex flex-col gap-2">
-                {Array.from({ length: def.count }).map((_, i) => {
-                  const slot = filled[i]
-                  return slot ? (
-                    <div key={slot.id} className="enter lift" style={{ '--i': defIndex + 3 + i, '--tc': POWER_HEX[slot.characters?.power_type] || '#71717a', '--frame': 'color-mix(in oklab, var(--tc) 35%, var(--color-zinc-800))' }}>
-                    <div className="frame cut">
-                    <div className="inner cut relative flex items-center gap-3 py-3 pl-4 pr-3.5" style={{ background: 'linear-gradient(100deg, color-mix(in oklab, var(--tc) 14%, var(--color-zinc-950)), var(--color-zinc-950) 70%)' }}>
-                      <span className="edge-glow absolute left-0 inset-y-0 w-1" style={{ background: 'var(--tc)' }} />
-                      <button onClick={() => router.push(`/character?id=${slot.character_id}`)}
-                        className="press flex-1 min-w-0 flex items-center gap-3 text-left">
-                        <span className="relative flex-shrink-0">
-                          <img src={slot.characters?.image_url} alt={slot.characters?.name}
-                            className="cut-sm w-[72px] h-[72px] object-cover object-top bg-zinc-800" />
-                          <span className="display absolute -right-0.5 -bottom-0.5 text-[13px] leading-none px-1.5 py-[3px] text-on-accent num" style={{ background: 'var(--tc)' }}>{slot.characters?.overall ?? '—'}</span>
-                        </span>
-                        <span className="flex-1 min-w-0">
-                          <span className="display block text-base uppercase truncate">{slot.characters?.name}</span>
-                          <span className="block text-zinc-500 text-xs truncate mt-0.5">{slot.characters?.anime_title}</span>
-                          <span className="label inline-block mt-1.5 rounded px-2 py-0.5 !text-[0.6875rem] border" style={{ color: 'var(--tc)', borderColor: 'color-mix(in oklab, var(--tc) 40%, transparent)' }}>{slot.characters?.power_type || '—'}</span>
-                        </span>
-                      </button>
-                      <div className="self-stretch flex flex-col items-end justify-between flex-shrink-0">
-                        <p className="display text-amber-400 text-sm num">{formatGold(slot.characters?.gold_cost)}</p>
-                        <button
-                          onClick={() => removeCharacter(slot.id)}
-                          disabled={removing === slot.id}
-                          className="text-zinc-500 text-xs py-1 -my-1 transition-colors duration-150 active:text-red-400 disabled:opacity-30">
-                          {removing === slot.id ? '...' : 'Remove'}
-                        </button>
-                      </div>
-                    </div>
-                    </div>
-                    </div>
-                  ) : (
-                    <button
-                      key={`empty-${i}`}
-                      onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
-                      className={`cut press w-full border border-dashed p-3 pl-4 flex items-center gap-3 min-h-[78px] ${def.color} ${def.empty}`}
-                      style={{ backgroundImage: 'repeating-linear-gradient(135deg, color-mix(in oklab, currentColor 7%, transparent) 0 8px, transparent 8px 16px)' }}>
-                      <span className="w-[72px] h-[72px] border border-dashed border-current/40 flex items-center justify-center flex-shrink-0">
-                        <Icon name="plus" size={26} />
-                      </span>
-                      <span className="display text-sm uppercase tracking-[0.12em]">Recruit {def.type}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>}
-      </div>
-
-      <BottomNav active="party" />
-    </div>
+            )
+          })}
+        </div>}
+    </Screen>
   )
 }

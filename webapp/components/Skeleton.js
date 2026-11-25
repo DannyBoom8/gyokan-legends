@@ -2,7 +2,7 @@
 export const Sk = ({ className = '', style }) => <div className={`skeleton ${className}`} style={style} />
 
 const Head = () => (
-  <div className="px-5 pt-14 pb-6 max-w-3xl mx-auto">
+  <div className="px-5 pt-4 pb-6 max-w-3xl mx-auto">
     <Sk className="h-3 w-24 mb-3" />
     <Sk className="h-8 w-48" />
   </div>
@@ -10,28 +10,28 @@ const Head = () => (
 
 const Rows = ({ n, h = 'h-16' }) => (
   <div className="px-5 max-w-3xl mx-auto flex flex-col gap-3">
-    {Array.from({ length: n }, (_, i) => <Sk key={i} className={`${h} rounded-2xl`} style={{ animationDelay: `${i * 80}ms` }} />)}
+    {Array.from({ length: n }, (_, i) => <Sk key={i} className={`${h}`} style={{ animationDelay: `${i * 80}ms` }} />)}
   </div>
 )
 
 export default function PageSkeleton({ variant = 'list' }) {
   return (
-    <div className="skeleton-wrap min-h-screen bg-black pb-28" role="status" aria-label="Loading">
+    <div className="skeleton-wrap mg min-h-screen pb-28" role="status" aria-label="Loading">
       <Head />
       {variant === 'dashboard' && (
         <>
-          <div className="mx-5 mb-4 max-w-3xl"><Sk className="h-52 rounded-[28px]" /></div>
+          <div className="mx-5 mb-4 max-w-3xl"><Sk className="h-52" /></div>
           <Rows n={2} h="h-24" />
-          <div className="px-5 mt-3 grid grid-cols-2 gap-3 max-w-3xl"><Sk className="h-28 rounded-2xl" /><Sk className="h-28 rounded-2xl" /></div>
+          <div className="px-5 mt-3 grid grid-cols-2 gap-3 max-w-3xl"><Sk className="h-28" /><Sk className="h-28" /></div>
         </>
       )}
       {variant === 'list' && <Rows n={6} />}
       {variant === 'cards' && <Rows n={3} h="h-28" />}
       {variant === 'detail' && (
         <div className="px-5 max-w-3xl mx-auto">
-          <Sk className="h-64 rounded-[28px] mb-4" />
-          <Sk className="h-24 rounded-2xl mb-3" />
-          <Sk className="h-24 rounded-2xl" />
+          <Sk className="h-64 mb-4" />
+          <Sk className="h-24 mb-3" />
+          <Sk className="h-24" />
         </div>
       )}
       <span className="sr-only">Loading</span>

@@ -1,8 +1,11 @@
-import { Geist, Chakra_Petch } from "next/font/google";
+import { Geist, Chakra_Petch, Anton } from "next/font/google";
 import "./globals.css";
+import "./manga.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const display = Chakra_Petch({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display-face" });
+
+const poster = Anton({ weight: "400", subsets: ["latin"], variable: "--font-poster" });
 
 const description =
   "Assemble your anime legends and lead them into battle against your rivals.";
@@ -30,8 +33,8 @@ export const metadata = {
 
 export const viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: "#e9e4d6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0c0b" },
   ],
   viewportFit: "cover",
 };
@@ -43,7 +46,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
-      <body className={`${geist.className} ${geist.variable} ${display.variable} antialiased bg-black`}>
+      <body className={`${geist.className} ${geist.variable} ${display.variable} ${poster.variable} antialiased bg-black`}>
         {children}
       </body>
     </html>
