@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { POWER_TYPES, RANKS, STATS, rankFor } from './game.js'
-import { CARD_RANKS, CUP_RANKS, DAILY_FIGHTS, EXTRA_PER_WEEK, MAX_UPGRADES, PRICES, RANK_START, SQUAD_SIZE, START_TOTAL, TACTICS, UPGRADE_COST, UPGRADES_PER_RANK, bigNames, bracket, bracketColumns, capped, coinsOf, drawOffers, evened, inReach, maxHp, rankOf, seeded, simulate, startingStats, statCap, upgradeCost,
+import { CARD_RANKS, CUP_RANKS, DAILY_FIGHTS, EXTRA_PER_WEEK, MAX_UPGRADES, PRICES, RANK_START, SQUAD_SIZE, START_TOTAL, TACTICS, UPGRADE_COST, UPGRADES_PER_RANK, bigNames, bracket, bracketColumns, capped, coinsOf, drawOffers, evened, inReach, maxHp, rankOf, seeded, simulate, squadRank, squadStrength, startingStats, statCap, upgradeCost,
   BIG_PRICE, DAILY_REWARDS, FEED_VALUE, FIND_ODDS, K, MARKET_PRICES, RANK_PERKS, TRAITS, WEEKLY_REWARD, WIN_POINTS, drawDaily, drawFind, drawMarket, feedValue, fighterHp, marketOpen, newCard, perksOf, pointsToTop, poolCost, rewardsDue, traitChoices, traitPending, traitSlots } from './squad.js'
 import { SQUAD_RPC, seedSquads } from './squad-rules.js'
 import { leaderboardRows } from './guild-rules.js'
@@ -360,7 +360,7 @@ for (const t of TACTICS) between(rate(s => s, s => s, t.id, t.beats), 54, 68, `$
 function perkRate(a, b) {
   const r = seeded(3), pick = (list) => list[Math.floor(r() * list.length)], N = 4000
   const squad = () => POWER_TYPES.map(type => pick(chars.filter(c => c.power_type === type))).sort(() => r() - 0.5)
-  const build = (cs, make) => ({ tactic: 'attack', fighters: cs.map(c => ({ power_type: c.power_type, ...make(startingStats(c), r) })) })
+  const build = (cs, make) => ({ tactic: 'attack', fighters: cs.map((c, i) => ({ power_type: c.power_type, ...make(startingStats(c), r, i) })) })
   let wins = 0
   for (let i = 0; i < N; i++) {
     const A = build(squad(), a), B = build(squad(), b), flip = i % 2
@@ -379,4 +379,18 @@ const ranked = (upgrades) => (stats, r) => {
 const steps = RANK_START.slice(1).map((start, i) => perkRate(ranked(start), ranked(RANK_START[i])))
 console.log(`one rank ahead wins: ${steps.map((v, i) => `${CARD_RANKS[i + 1]} v ${CARD_RANKS[i]} ${v.toFixed(0)}%`).join(', ')}`)
 steps.forEach((v, i) => between(v, 62, 86, `rank ${CARD_RANKS[i + 1]} against the one below`))
+// squad rank: even squads keep their cards' rank, and strong cards over weak ones can't hide in a low one
+const even = (upgrades) => Array.from({ length: SQUAD_SIZE }, () => ({ upgrades }))
+for (let u = 0; u <= MAX_UPGRADES; u++) assert.equal(squadStrength(even(u)), u)
+const mix = (levels) => levels.map(upgrades => ({ upgrades }))
+const stacks = [[18, 18, 0, 0, 0, 0], [25, 0, 0, 0, 0, 0], [25, 25, 0, 0, 0, 0]]
+assert.equal(stacks.map(l => CARD_RANKS[squadRank(mix(l))]).join(''), 'CCB')
+// none of them beats a squad with every card maxed for its rank more often than not
+for (const levels of stacks) {
+  const rank = squadRank(mix(levels)), top = RANK_START[rank + 1] - 1
+  const cardsAt = (list) => (stats, r, i) => ranked(list[i])(stats, r)
+  const won = perkRate(cardsAt(levels), cardsAt(Array(SQUAD_SIZE).fill(top)))
+  console.log(`${levels.join('/')} (rank ${CARD_RANKS[rank]}) beats an even squad at the top of that rank ${won.toFixed(0)}%`)
+  between(won, 0, 50, `stacked ${levels.join('/')}`)
+}
 console.log('all squad checks passed')

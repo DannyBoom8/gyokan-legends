@@ -79,7 +79,7 @@ export default function Rules() {
           <p className="mt-3">
             <span className="font-bold">Fight</span> is ranked, {DAILY_FIGHTS} a day, against squads within one rank of yours.
             It goes on your record. The first time you beat a rival each day you earn one upgrade point and {WIN_POINTS} season points.
-            Being challenged never changes your own record.
+            Being challenged never changes your own record. Squad rank comes from all six cards, with your stronger cards counting for more.
           </p>
         </Section>
 

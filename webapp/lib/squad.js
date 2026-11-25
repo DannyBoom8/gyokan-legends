@@ -118,7 +118,10 @@ export function startingStats(character) {
 // a card of any rank starts from the same shape, with that rank's stat points still to place
 export const newCard = (character, rank = 0) => ({ character_id: character.character_id, upgrades: RANK_START[rank], points: RANK_START[rank] * POINTS_PER_UPGRADE, stats: startingStats(character), traits: [] })
 
-export const squadStrength = (cards) => Math.round(cards.reduce((n, c) => n + c.upgrades, 0) / (cards.length || 1))
+// upgrades per card, with stronger cards counting for more: a plain average let a few strong cards over weak ones
+// rank far below how they fight. 1.5 matched measured strength best
+const WEIGHT = 1.5
+export const squadStrength = (cards) => Math.round((cards.reduce((n, c) => n + c.upgrades ** WEIGHT, 0) / (cards.length || 1)) ** (1 / WEIGHT))
 export const squadRank = (cards) => rankOf(squadStrength(cards))
 // ranked battles stay within one squad rank, so nobody farms or gets farmed
 export const inReach = (mine, theirs) => Math.abs(squadRank(mine) - squadRank(theirs)) <= 1
