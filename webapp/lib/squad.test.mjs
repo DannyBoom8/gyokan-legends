@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { POWER_TYPES, RANKS, STATS, rankFor } from './game.js'
-import { CARD_RANKS, CUP_RANKS, DAILY_FIGHTS, EXTRA_PER_WEEK, MAX_UPGRADES, PRICES, RANK_START, SQUAD_SIZE, START_TOTAL, TACTICS, UPGRADE_COST, UPGRADES_PER_RANK, bigNames, bracket, capped, coinsOf, drawOffers, evened, inReach, maxHp, rankOf, seeded, simulate, startingStats, statCap, upgradeCost,
+import { CARD_RANKS, CUP_RANKS, DAILY_FIGHTS, EXTRA_PER_WEEK, MAX_UPGRADES, PRICES, RANK_START, SQUAD_SIZE, START_TOTAL, TACTICS, UPGRADE_COST, UPGRADES_PER_RANK, bigNames, bracket, bracketColumns, capped, coinsOf, drawOffers, evened, inReach, maxHp, rankOf, seeded, simulate, startingStats, statCap, upgradeCost,
   BIG_PRICE, DAILY_REWARDS, FEED_VALUE, FIND_ODDS, K, MARKET_PRICES, RANK_PERKS, TRAITS, WEEKLY_REWARD, WIN_POINTS, drawDaily, drawFind, drawMarket, feedValue, fighterHp, marketOpen, newCard, perksOf, pointsToTop, poolCost, rewardsDue, traitChoices, traitPending, traitSlots } from './squad.js'
 import { SQUAD_RPC, seedSquads } from './squad-rules.js'
 import { leaderboardRows } from './guild-rules.js'
@@ -158,6 +158,9 @@ assert.equal(capped(veteran, 1).upgrades, RANK_START[2] - 1) // top of D
 assert.ok(Math.abs(total(capped(veteran, 1).stats) - (START_TOTAL + 18)) <= 4)
 assert.equal(capped(veteran, CARD_RANKS.length - 1), veteran)
 assert.deepEqual(capped({ upgrades: 20, stats: startingStats(chars[0]) }, 1).stats, startingStats(chars[0])) // unplaced points add nothing
+const lopsided = capped({ upgrades: 25, stats: { ...startingStats(chars[0]), strength: 125 } }, 1)
+assert.ok(STATS.every(s => lopsided.stats[s] <= statCap(RANK_START[2] - 1))) // no stat a D card couldn't have
+assert.ok(total(lopsided.stats) <= START_TOTAL + 18 + 4)
 assert.deepEqual(bracket(4), [0, 3, 1, 2])
 assert.deepEqual(bracket(3), [0, 3, 1, 2])
 assert.equal(bracket(5).length, 8)
@@ -177,6 +180,11 @@ const final = cup.rounds.at(-1)[0]
 assert.equal(cup.champion.party_id, final[final.winner].party_id)
 assert.ok(cup.rounds.flat().every(m => m.bouts.every(b => !b.battle || [...b.battle.a.fighters, ...b.battle.b.fighters].every(f => rankOf(f.upgrades) <= cup.limit))))
 throws(() => SQUAD_RPC.cup_play(db, 'me', {}, 1, 'w1'), 'been played')
+// the drawn bracket: the bye goes back in its place, and each match feeds the side it came from
+const [first, [decider]] = bracketColumns(cup.rounds)
+assert.equal(first.length, 2)
+assert.equal(first.filter(s => s.bye).length, 1)
+assert.ok(['a', 'b'].every((side, i) => (first[i].bye || first[i][first[i].winner]).party_id === decider[side].party_id))
 // the badge goes to the winners who had a squad, and to nobody else
 const winners = members.filter(([id, party]) => party === cup.champion.party_id && db.squads.some(s => s.user_id === id)).map(([id]) => id)
 assert.deepEqual([...cup.champion.members].sort(), winners.sort())

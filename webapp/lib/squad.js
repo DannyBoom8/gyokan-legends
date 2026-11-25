@@ -195,7 +195,17 @@ export function capped(card, rank) {
   const most = rank < TOP ? RANK_START[rank + 1] - 1 : MAX_UPGRADES
   if (card.upgrades <= most) return card
   const size = START_TOTAL + most * POINTS_PER_UPGRADE
-  return { ...card, upgrades: most, stats: total(card.stats) > size ? resized(card.stats, size) : card.stats }
+  const stats = total(card.stats) > size ? resized(card.stats, size) : { ...card.stats }
+  // nor may one stat stay above what a card at the limit can reach; what is cut goes to the strongest of the rest
+  const cap = statCap(most)
+  const order = [...STATS].sort((a, b) => stats[b] - stats[a])
+  let spare = 0
+  for (const s of order) if (stats[s] > cap) { spare += stats[s] - cap; stats[s] = cap }
+  for (let i = 0; spare > 0; i++) {
+    const s = order[i % order.length]
+    if (stats[s] < cap) { stats[s]++; spare-- }
+  }
+  return { ...card, upgrades: most, stats }
 }
 
 // seed numbers in knockout order, best against worst: 4 entrants give 0 v 3 and 1 v 2.
@@ -204,6 +214,17 @@ export function bracket(entrants) {
   let order = [0]
   while (order.length < entrants) order = order.flatMap(s => [s, order.length * 2 - 1 - s])
   return order
+}
+
+// a played cup's rounds hold only real matches; this puts each one back in its place on the tree, first round
+// first, with { bye: party } where nobody had to be played
+export function bracketColumns(rounds) {
+  const columns = [rounds.at(-1)]
+  for (let r = rounds.length - 2; r >= 0; r--) {
+    columns.unshift(columns[0].flatMap(match => ['a', 'b'].map(side =>
+      rounds[r].find(m => m[m.winner].party_id === match[side].party_id) || { bye: match[side] })))
+  }
+  return columns
 }
 
 export function seeded(seed) {

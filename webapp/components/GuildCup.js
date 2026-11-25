@@ -5,18 +5,17 @@ import { supabase } from '../lib/supabase'
 import { byPoints } from '../lib/social'
 import { weekOf } from '../lib/guild-rules'
 import { isDemo } from '../lib/demo'
-import { CARD_RANKS, CUP_RANKS, cupName } from '../lib/squad'
+import { CARD_RANKS, CUP_RANKS, bracketColumns, cupName } from '../lib/squad'
 import { Panel, Caption } from './Manga'
 import { Empty } from './Players'
 import Icon from './Icon'
 import Bouts from './Bouts'
-
-const roundName = (fromEnd) => ['Final', 'Semi-finals', 'Quarter-finals'][fromEnd] || `${2 ** fromEnd} matches`
+import Bracket, { roundName } from './Bracket'
 
 // the weekly knockout between tournament parties from every guild
 export default function GuildCup({ me, parties, seats, onParties }) {
   const [data, setData] = useState(null)
-  const [shown, setShown] = useState(null)
+  const [shown, setShown] = useState(null) // a bracket match, "round-place"
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -43,6 +42,9 @@ export default function GuildCup({ me, parties, seats, onParties }) {
   const limit = played ? played.limit : CUP_RANKS[cups.length % CUP_RANKS.length]
   const inParty = seats.some(s => s.user_id === me.user_id && parties.some(p => p.id === s.party_id && p.occasion === 'tournament'))
   const latest = cups[0]
+  const [column, place] = shown ? shown.split('-').map(Number) : []
+  const columns = latest ? bracketColumns(latest.rounds) : []
+  const picked = columns[column]?.[place]
 
   const run = async (name) => {
     setBusy(true); setError(''); setShown(null)
@@ -103,33 +105,22 @@ export default function GuildCup({ me, parties, seats, onParties }) {
             </div>
           </Panel>
 
-          {latest.rounds.map((matches, r) => ({ matches, r })).reverse().map(({ matches, r }) => (
-            <section key={`${latest.id}-${r}`} className="mb-3">
-              <h2 className="poster text-xl mb-2">{roundName(latest.rounds.length - 1 - r)}</h2>
-              <ul className="grid gap-3 sm:grid-cols-2 sm:items-start">
-                {matches.map((m, i) => {
-                  const id = `${latest.id}-${r}-${i}`, open = shown === id
-                  return (
-                    <li key={id} className={`box ${open || matches.length === 1 ? 'sm:col-span-2' : ''}`}>
-                      <button onClick={() => setShown(open ? null : id)} aria-expanded={open} className="hov-row block w-full text-left">
-                        {['a', 'b'].map(side => (
-                          <span key={side} className={`flex items-center gap-3 px-3 py-2 ${m.winner === side ? 'bg-[var(--spot)] text-white' : ''}`}>
-                            <span className="flex-1 min-w-0">
-                              <span className="poster block text-xl break-words">{m[side].name}</span>
-                              <span className="label block mt-1 opacity-75">{m[side].tag}{m.winner === side && <> · through</>}</span>
-                            </span>
-                            <span className="poster text-3xl">{side === 'a' ? m.score : m.against}</span>
-                          </span>
-                        ))}
-                        <span className="label muted !whitespace-normal block px-3 py-2">{m.tied && 'Drawn, more fighters standing decided it · '}{open ? 'Hide bouts' : 'Show bouts'}</span>
-                      </button>
-                      {open && <Bouts bouts={m.bouts} names={names} me={me.user_id} label={cupName(latest.limit)} />}
-                    </li>
-                  )
-                })}
-              </ul>
+          <section className="box p-3 mb-3" aria-label="Bracket">
+            <h2 className="poster text-xl">{played ? 'This week' : 'Last cup'}: the bracket</h2>
+            <p className="muted text-sm mt-1 mb-3">Beaten parties are struck out. Tap a match to see its bouts.</p>
+            <Bracket cup={latest} shown={shown} onPick={setShown} />
+          </section>
+
+          {picked && !picked.bye && (
+            // a long bracket leaves this below the fold, so bring it into view
+            <section key={`${latest.id}-${shown}`} ref={el => el?.scrollIntoView({ block: 'nearest' })} className="box mb-3">
+              <div className="p-3">
+                <h2 className="poster text-xl break-words">{picked.a.name} <span className="whitespace-nowrap">{picked.score}–{picked.against}</span> {picked.b.name}</h2>
+                <p className="label muted !whitespace-normal mt-1">{roundName(columns.length - 1 - column)}{picked.tied && ' · drawn, more fighters standing decided it'}</p>
+              </div>
+              <Bouts bouts={picked.bouts} names={names} me={me.user_id} label={cupName(latest.limit)} />
             </section>
-          ))}
+          )}
 
           {cups.length > 1 && (
             <Panel i={3} pageClass="flex flex-col">
