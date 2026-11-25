@@ -151,8 +151,10 @@
 /* slanted panels: each cell skews and its picture skews back */
 .faces { position: absolute; inset: 0 -3%; display: flex; flex-wrap: wrap; align-content: flex-start; overflow: hidden; background: var(--line); }
 .face { --lean: -6deg; position: relative; height: calc(100% / 6); overflow: hidden; border: 3px solid var(--line); background: #12100e; transform: skewX(var(--lean)); }
-.face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; transform: skewX(calc(-1 * var(--lean))) scale(1.16); filter: grayscale(1) contrast(1.2) brightness(0.62); transition: filter 220ms ease, scale 300ms var(--ease-out); }
-.face::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(rgb(0 0 0 / 0.55) 1px, transparent 1.6px) 0 0 / 5px 5px; transition: opacity 220ms ease; }
+.face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; transform: skewX(calc(-1 * var(--lean))) scale(1.16); filter: grayscale(1) contrast(1.2) brightness(0.62); transition: filter 220ms ease, scale 300ms var(--ease-out); }
+.face img + img { animation: face-in 700ms ease backwards; }
+@keyframes face-in { from { opacity: 0; } }
+.face::after { content: ''; z-index: 1; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(rgb(0 0 0 / 0.55) 1px, transparent 1.6px) 0 0 / 5px 5px; transition: opacity 220ms ease; }
 :root[data-theme="light"] .face img { filter: grayscale(1) contrast(1.15) brightness(0.95); }
 /* upright screens: 4 across, 6 down; every other row has its own widths and leans the other way */
 @media (orientation: portrait) {
