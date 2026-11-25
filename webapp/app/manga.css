@@ -147,6 +147,55 @@
 /* one quiet entrance, panel by panel in reading order */
 .mg .arrive { animation: appear 320ms var(--ease-out) backwards; animation-delay: calc(min(var(--i, 0), 8) * 60ms); }
 
+/* ---------- sign-in page: a manga page of faces behind a card that always fits the screen ---------- */
+/* slanted panels: each cell skews and its picture skews back */
+.faces { position: absolute; inset: 0 -3%; display: flex; flex-wrap: wrap; align-content: flex-start; overflow: hidden; background: var(--line); }
+.face { --lean: -6deg; position: relative; height: calc(100% / 6); overflow: hidden; border: 3px solid var(--line); background: #12100e; transform: skewX(var(--lean)); }
+.face img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; transform: skewX(calc(-1 * var(--lean))) scale(1.16); filter: grayscale(1) contrast(1.2) brightness(0.62); transition: filter 220ms ease, scale 300ms var(--ease-out); }
+.face::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(rgb(0 0 0 / 0.55) 1px, transparent 1.6px) 0 0 / 5px 5px; transition: opacity 220ms ease; }
+:root[data-theme="light"] .face img { filter: grayscale(1) contrast(1.15) brightness(0.95); }
+/* upright screens: 4 across, 6 down; every other row has its own widths and leans the other way */
+@media (orientation: portrait) {
+  .face:nth-child(n+25) { display: none; }
+  .face:nth-child(8n+1) { width: 29%; }
+  .face:nth-child(8n+2) { width: 21%; }
+  .face:nth-child(8n+3) { width: 23%; }
+  .face:nth-child(8n+4) { width: 27%; }
+  .face:nth-child(8n+5) { width: 22%; --lean: 6deg; }
+  .face:nth-child(8n+6) { width: 29%; --lean: 6deg; }
+  .face:nth-child(8n+7) { width: 28%; --lean: 6deg; }
+  .face:nth-child(8n) { width: 21%; --lean: 6deg; }
+}
+/* wide screens: 8 across, 4 down */
+@media (orientation: landscape) {
+  .face { height: 25%; }
+  .face:nth-child(8n+1) { width: 14.5%; }
+  .face:nth-child(8n+2) { width: 10.5%; }
+  .face:nth-child(8n+3) { width: 13%; }
+  .face:nth-child(8n+4) { width: 12%; }
+  .face:nth-child(8n+5) { width: 11%; }
+  .face:nth-child(8n+6) { width: 14%; }
+  .face:nth-child(8n+7) { width: 10.5%; }
+  .face:nth-child(8n) { width: 14.5%; }
+  .face:nth-child(n+9):nth-child(-n+16), .face:nth-child(n+25) { --lean: 6deg; }
+}
+.face:active img { filter: none; }
+.face:active::after { opacity: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .face:hover { border-color: var(--spot); z-index: 1; }
+  .face:hover img { filter: none; scale: 1.08; }
+  .face:hover::after { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .face:hover img { scale: none; } }
+
+/* spacing shrinks with the window height, so the card never makes the page scroll */
+.mg .login-card { gap: clamp(6px, 1.2dvh, 12px); padding: clamp(10px, 2dvh, 20px); box-shadow: 10px 10px 0 rgb(0 0 0 / 0.55); }
+.mg .login-card > * { flex-shrink: 0; }
+.mg .login-logo { width: min(15rem, 30dvh, 100%); }
+.mg .login-card :is(.btn, .btn-spot) { padding: clamp(8px, 1.4dvh, 12px) 8px; }
+.mg .login-card .btn-spot { padding-block: clamp(10px, 1.9dvh, 16px); }
+.mg .login-card .field { padding-block: clamp(7px, 1.4dvh, 12px); }
+
 /* avatar picker */
 .picker {
   margin: auto; width: min(720px, calc(100vw - 24px)); max-height: 85dvh; padding: 0;

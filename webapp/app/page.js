@@ -2,12 +2,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
-import Icon from '../components/Icon'
+import FaceWall from '../components/FaceWall'
 import { Wordmark } from '../components/Logo'
 import { Sk } from '../components/Skeleton'
 import { startDemo } from '../lib/demo'
 import ThemeToggle from '../components/ThemeToggle'
-import { Screen, Panel } from '../components/Manga'
 
 const OFFLINE = "Can't reach the Gyokan servers right now. Try again in a moment."
 // supabase reports network failures as a retryable fetch error with status 0
@@ -70,7 +69,7 @@ export default function LandingPage() {
   }
 
   if (checking) return (
-    <div className="skeleton-wrap mg min-h-screen flex flex-col items-center justify-center px-6" role="status" aria-label="Loading">
+    <div className="skeleton-wrap mg h-dvh overflow-hidden flex flex-col items-center justify-center px-6" role="status" aria-label="Loading">
       <Sk className="h-12 w-56 mb-4" />
       <Sk className="h-4 w-40 mb-10" />
       <Sk className="h-12 w-full max-w-sm mb-3" />
@@ -80,17 +79,16 @@ export default function LandingPage() {
   )
 
   return (
-    <Screen width="max-w-md">
-      <div className="flex flex-col gap-3 py-4 md:py-8">
-        <div className="arrive border-b-4 border-[var(--line)] pb-4 text-center">
-          <h1><Wordmark className="mx-auto w-72 max-w-full" /></h1>
-          <p className="poster text-xl muted mt-3">Rise. Battle. Become Legend.</p>
-        </div>
+    <main className="mg login relative h-dvh overflow-hidden">
+      <FaceWall />
+      {/* only the card takes the pointer, so every face around it can still be hovered */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-3">
+        <div className="arrive login-card box pointer-events-auto w-full max-w-sm max-h-full overflow-y-auto flex flex-col">
+          <h1><Wordmark className="login-logo mx-auto" /></h1>
 
-        <Panel i={1} pageClass="p-4 flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-2">
             {['login', 'signup'].map(t => (
-              <button key={t} onClick={() => { setTab(t); setError('') }} aria-pressed={tab === t} className="btn text-xl py-3">
+              <button key={t} onClick={() => { setTab(t); setError('') }} aria-pressed={tab === t} className="btn text-lg">
                 {t === 'login' ? 'Login' : 'Sign up'}
               </button>
             ))}
@@ -115,33 +113,25 @@ export default function LandingPage() {
             onKeyDown={e => e.key === 'Enter' && (tab === 'login' ? handleLogin() : handleSignup())}
             className="field"
           />
-          {tab === 'signup' && <p className="muted text-sm">Username 3 to 20 characters · password at least 8</p>}
+          {tab === 'signup' && <p className="muted text-xs">Username 3 to 20 characters · password at least 8</p>}
 
           {error && <p role="alert" className="text-sm font-semibold" style={{ color: 'var(--spot-text)' }}>{error}</p>}
 
           <button
             onClick={tab === 'login' ? handleLogin : handleSignup}
             disabled={loading}
-            className="btn-spot text-2xl w-full py-4">
+            className="btn-spot text-xl w-full">
             {loading ? 'Please wait…' : tab === 'login' ? 'Enter the Arena' : 'Join Gyokan Legends'}
           </button>
-          <button onClick={startDemo} className="btn text-xl w-full py-3">Try the demo</button>
-        </Panel>
 
-        <Panel i={2} className="hov" pageClass="!bg-[#12100e] text-[#f3efe4]">
-          <div className="tone absolute -z-10 inset-0" style={{ '--ink': '#f3efe4' }} aria-hidden="true" />
-          <button onClick={() => router.push('/games')} className="press w-full p-4 flex items-center justify-between gap-3 text-left">
-            <span>
-              <span className="poster block text-2xl">Play free anime games</span>
-              <span className="block text-sm mt-1.5">Hangman, Imposter and Charades. No account needed.</span>
-            </span>
-            <Icon name="arrow" size={22} className="hov-icon flex-shrink-0" />
-          </button>
-        </Panel>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={startDemo} className="btn text-lg">Try the demo</button>
+            <button onClick={() => router.push('/games')} className="btn text-lg">Free games</button>
+          </div>
 
-        <ThemeToggle className="mt-3" />
-        <p className="label muted text-center mt-3">A Gyokan product</p>
+          <ThemeToggle />
+        </div>
       </div>
-    </Screen>
+    </main>
   )
 }
