@@ -2,6 +2,12 @@
 
 export const BUDGET = 100000000
 
+// guilds, parties and fights (sql/005_guilds.sql enforces the same numbers)
+export const COUNTRIES = { NG: 'Nigeria' } // more open as the game goes worldwide
+export const GUILD_MAX = 30
+export const PARTY_MAX = 5
+export const OCCASIONS = [['battle', 'Battle'], ['tournament', 'Tournament']]
+
 export const SLOT_DEFS = [
   { type: 'Champion', count: 2, points: 5, color: 'text-amber-400', border: 'border-amber-500/30 bg-amber-500/5', empty: 'border-amber-500/20' },
   { type: 'Specialist', count: 3, points: 4, color: 'text-purple-400', border: 'border-purple-500/30 bg-purple-500/5', empty: 'border-purple-500/20' },

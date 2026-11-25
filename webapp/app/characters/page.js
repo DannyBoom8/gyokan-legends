@@ -17,14 +17,14 @@ function CharactersContent() {
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [adding, setAdding] = useState(null)
-  const [partyCharIds, setPartyCharIds] = useState([])
+  const [lineupIds, setLineupIds] = useState([])
   const [goldLeft, setGoldLeft] = useState(BUDGET)
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const slotType = searchParams.get('slot')
   const slotPosition = searchParams.get('position')
-  const partyId = searchParams.get('party')
+  const lineupId = searchParams.get('lineup')
   const isSelecting = !!slotType
 
   const fetchCharacters = async (reset = false) => {
@@ -57,12 +57,12 @@ function CharactersContent() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
 
-      if (partyId) {
+      if (lineupId) {
         const { data: existingSlots } = await supabase
           .from('party_slots')
           .select('character_id, characters(gold_cost)')
-          .eq('party_id', parseInt(partyId))
-        setPartyCharIds((existingSlots || []).map(s => s.character_id))
+          .eq('party_id', parseInt(lineupId))
+        setLineupIds((existingSlots || []).map(s => s.character_id))
         setGoldLeft(BUDGET - (existingSlots || []).reduce((sum, s) => sum + (s.characters?.gold_cost || 0), 0))
       }
 
@@ -83,12 +83,12 @@ function CharactersContent() {
     setLoadingMore(false)
   }
 
-  const addToParty = async (character) => {
+  const addToLineup = async (character) => {
     if (!isSelecting || character.gold_cost > goldLeft) return
     setAdding(character.character_id)
 
     const { error } = await supabase.from('party_slots').insert({
-      party_id: parseInt(partyId),
+      party_id: parseInt(lineupId),
       character_id: character.character_id,
       slot_type: slotType,
       slot_position: parseInt(slotPosition),
@@ -97,19 +97,19 @@ function CharactersContent() {
 
     if (error) {
       setAdding(null)
-      alert('Could not add character. They may already be in your party.')
+      alert('Could not add character. They may already be in your lineup.')
       return
     }
 
-    router.push('/party')
+    router.push('/lineup')
   }
 
   const formatFavs = (f) => f >= 1000 ? `${(f / 1000).toFixed(1)}k` : `${f}`
 
   return (
     <Screen nav={isSelecting ? null : 'characters'}>
-      <PageHead title="Characters" back={isSelecting ? '/party' : undefined} backLabel="Party"
-        sub={isSelecting ? `Picking ${slotType}, slot ${slotPosition} · ${formatGold(goldLeft)} gold left` : 'Scout fighters for your party'} />
+      <PageHead title="Characters" back={isSelecting ? '/lineup' : undefined} backLabel="Lineup"
+        sub={isSelecting ? `Picking ${slotType}, slot ${slotPosition} · ${formatGold(goldLeft)} gold left` : 'Scout fighters for your lineup'} />
 
       <input
         type="search"
@@ -137,7 +137,7 @@ function CharactersContent() {
         <>
           <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {characters.map(char => {
-              const alreadyIn = partyCharIds.includes(char.character_id)
+              const alreadyIn = lineupIds.includes(char.character_id)
               return (
                 <li key={char.character_id} className="box hov-card flex flex-col min-w-0">
                   <button onClick={() => router.push(`/character?id=${char.character_id}`)} className="art press relative block text-left">
@@ -157,10 +157,10 @@ function CharactersContent() {
                     </div>
                     <p className="label muted !text-[0.625rem] mt-1">{formatFavs(char.favourites)} favs</p>
                     {isSelecting && (
-                      alreadyIn ? <p className="label muted text-center py-2.5 mt-2">In your party</p>
+                      alreadyIn ? <p className="label muted text-center py-2.5 mt-2">In your lineup</p>
                         : char.gold_cost > goldLeft ? <p className="label muted text-center py-2.5 mt-2">Too pricey</p>
                         : (
-                          <button onClick={() => addToParty(char)} disabled={adding === char.character_id}
+                          <button onClick={() => addToLineup(char)} disabled={adding === char.character_id}
                             className="btn-spot press text-lg w-full py-2 mt-2">
                             {adding === char.character_id ? '…' : 'Pick'}
                           </button>

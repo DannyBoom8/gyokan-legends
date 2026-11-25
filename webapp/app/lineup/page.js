@@ -7,7 +7,7 @@ import { Screen, PageHead, Caption } from '../../components/Manga'
 import PageSkeleton from '../../components/Skeleton'
 import { BUDGET, SLOT_DEFS, POWER_HEX, formatGold } from '../../lib/game'
 
-export default function Party() {
+export default function Lineup() {
   const [party, setParty] = useState(null)
   const [slots, setSlots] = useState([])
   const [loading, setLoading] = useState(true)
@@ -66,7 +66,7 @@ export default function Party() {
   const change = async (slot, def) => {
     const pos = slot.slot_position
     await removeCharacter(slot.id)
-    router.push(`/characters?slot=${def.type}&position=${pos}&party=${party?.id}`)
+    router.push(`/characters?slot=${def.type}&position=${pos}&lineup=${party?.id}`)
   }
 
   const totalGoldSpent = slots.reduce((sum, s) => sum + (s.characters?.gold_cost || 0), 0)
@@ -90,7 +90,7 @@ export default function Party() {
     const tall = 'w-full h-full max-h-[14rem] flex flex-col gap-1'
     if (!slot) return (
       <div key={`${def.type}-${i}`} className={cell}>
-        <button onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
+        <button onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&lineup=${party?.id}`)}
           aria-label={`Recruit ${def.type}`} className={`hov-thumb press ${tall}`}>
           <span className="relative flex-1 min-h-0">
             <span className={`${frame} border-2 border-dashed border-[var(--line)] bg-[var(--panel)] flex items-center justify-center muted`}>
@@ -187,8 +187,8 @@ export default function Party() {
   const over = goldRemaining < 0
 
   return (
-    <Screen nav="party" fit={view === 'formation' ? 'always' : undefined}>
-      <PageHead compact title="My Party" aside={
+    <Screen nav="lineup" fit={view === 'formation' ? 'always' : undefined}>
+      <PageHead compact title="My Lineup" aside={
         <div className="flex items-center gap-1.5">
           <p className={`label border-2 px-2 py-2 ${over ? 'bg-[var(--spot)] border-[var(--spot)] text-white' : 'border-[var(--line)]'}`}>
             {over ? `Over by ${formatGold(-goldRemaining)}` : `${formatGold(goldRemaining)} gold`}
@@ -198,7 +198,7 @@ export default function Party() {
             className="btn text-sm px-3 py-2">List</button>
         </div>
       } />
-      {over && <p role="status" className="label !whitespace-normal mb-2" style={{ color: 'var(--spot-text)' }}>Over budget: this party won&apos;t score on battle night</p>}
+      {over && <p role="status" className="label !whitespace-normal mb-2" style={{ color: 'var(--spot-text)' }}>Over budget: this lineup won&apos;t score on battle night</p>}
 
       {view === 'formation' && formationView}
         {view === 'list' && <div className="grid md:grid-cols-2 gap-3 items-start">
@@ -238,7 +238,7 @@ export default function Party() {
                             </div>
                           </div>
                         ) : (
-                          <button onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&party=${party?.id}`)}
+                          <button onClick={() => router.push(`/characters?slot=${def.type}&position=${firstFreePosition(def)}&lineup=${party?.id}`)}
                             className="toc press w-full flex items-center gap-3 text-left min-h-[72px]">
                             <span className="w-[72px] h-[72px] border-2 border-dashed border-[var(--line)] flex items-center justify-center muted flex-shrink-0">
                               <Icon name="plus" size={26} />

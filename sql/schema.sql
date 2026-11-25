@@ -1,5 +1,6 @@
 -- Full schema for a fresh Supabase project, matching what the web app and pipeline use.
--- Fresh project: run this file, then 002_leaderboard.sql, 003_harden.sql and 004_avatar.sql, in that order.
+-- Fresh project: run this file, then 002_leaderboard.sql, 003_harden.sql, 004_avatar.sql and 005_guilds.sql, in that order.
+-- "parties" and "party_slots" hold a player's LINEUP. Guild parties are guild_parties (005).
 
 CREATE TABLE characters (
     character_id        INT PRIMARY KEY,           -- AniList id

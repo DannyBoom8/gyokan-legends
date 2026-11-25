@@ -1,15 +1,19 @@
 // Demo mode: a stand-in for the Supabase client that keeps a small game world in this browser.
 // It answers the same query calls the pages make, so every page works without the backend.
 // Fight and scoring rules mirror pipeline/battle.py; keep them in sync.
-import { BUDGET, SLOT_DEFS, DRAW_POINTS, MEDIC_BOOST, BEATS } from './game'
+import { BUDGET, SLOT_DEFS, DRAW_POINTS, MEDIC_BOOST } from './game'
+import { RPC, fight, leaderboardRows, guildRows } from './guild-rules.js'
 
 const FLAG = 'gyokan-demo'
-const STORE = 'gyokan-demo-db-v2'
+const STORE = 'gyokan-demo-db-v3' // bump when the demo tables change
 const ME = 'demo-player'
 const RANKS = [[500, 'Legendary'], [350, 'Sovereign'], [220, 'Warlord'], [110, 'Veteran'], [40, 'Ronin'], [0, 'Rookie']]
 const SLOT_POINTS = Object.fromEntries(SLOT_DEFS.map(d => [d.type, d.points]))
 const BOTS = ['TitanSlayer', 'MangaMage', 'NarutoFan', 'SoloLevelUp', 'HunterX', 'NewbieSan', 'CursedQueen', 'OnePieceGuy', 'ShinobiKai', 'AuraFarmer', 'PlusUltra']
 const PK = { characters: 'character_id', users: 'id', user_ranks: 'user_id', parties: 'id', party_slots: 'id', gameweeks: 'gameweek_id', fixtures: 'fixture_id', results: 'result_id', fantasy_points: 'points_id', seasons: 'season_id' }
+
+// bots by index into BOTS; the demo player starts in the first guild. NewbieSan has none.
+const GUILDS = [['Lagos Shinobi', 'LSN', [0, 1, 2, 4]], ['Abuja Titans', 'ABJ', [3, 6, 7, 8]], ['Port Harcourt Crew', 'PHC', [9, 10]]]
 
 const storage = () => { try { return window.localStorage } catch { return null } }
 export const isDemo = () => typeof window !== 'undefined' && storage()?.getItem(FLAG) === '1'
@@ -22,12 +26,6 @@ function rng(seed) {
   const next = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 2 ** 32)
   next.gauss = () => Math.sqrt(-2 * Math.log(next() || 1e-9)) * Math.cos(2 * Math.PI * next())
   return next
-}
-
-function fight(a, b, r) {
-  const power = (me, them) => (me.overall || 50) + (BEATS[me.power_type] === them.power_type ? 6 : 0) + r.gauss() * 8
-  const pa = power(a, b), pb = power(b, a)
-  return Math.abs(pa - pb) < 1.5 ? null : pa > pb ? a.character_id : b.character_id
 }
 
 // a random legal party: each slot gets a random character the remaining budget allows
@@ -47,20 +45,36 @@ function randomParty(chars, r) {
 
 function seed(chars) {
   const r = rng(7)
-  const db = { characters: chars.map(c => ({ ...c, is_active: true })), users: [], user_ranks: [], parties: [], party_slots: [], seasons: [{ season_id: 1, name: 'Season 1', is_active: true }], gameweeks: [], fixtures: [], results: [], fantasy_points: [], seq: {} }
+  const db = { characters: chars.map(c => ({ ...c, is_active: true })), users: [], user_ranks: [], parties: [], party_slots: [], seasons: [{ season_id: 1, name: 'Season 1', is_active: true }], gameweeks: [], fixtures: [], results: [], fantasy_points: [], guilds: [], guild_members: [], guild_parties: [], guild_party_members: [], nakama: [], duels: [], seq: {} }
   for (const [id, username] of [[ME, 'DemoPlayer'], ...BOTS.map((b, i) => [`bot-${i}`, b])]) {
-    db.users.push({ id, username })
+    db.users.push({ id, username, country_code: 'NG' })
     db.user_ranks.push({ user_id: id, current_rank: 'Rookie', season_points: 0, all_time_points: 0, is_legend: false })
     const party = insertRow(db, 'parties', { user_id: id })
     for (const s of randomParty(db.characters, r)) insertRow(db, 'party_slots', { ...s, party_id: party.id, gameweek: null })
   }
   for (let w = 0; w < 3; w++) battleNight(db, r)
+  seedSocial(db, r)
   return db
+}
+
+function seedSocial(db, r) {
+  for (const [name, tag, members] of GUILDS) {
+    const [leader, ...rest] = members.map(i => `bot-${i}`)
+    const id = RPC.create_guild(db, leader, { p_name: name, p_tag: tag })
+    for (const who of tag === 'LSN' ? [...rest, ME] : rest) RPC.join_guild(db, who, { p_guild: id })
+  }
+  const raid = RPC.create_party(db, 'bot-0', { p_name: 'Thursday Raiders', p_occasion: 'battle' })
+  RPC.join_party(db, 'bot-1', { p_party: raid })
+  db.nakama.push({ user_id: ME, nakama_id: 'bot-1' }, { user_id: ME, nakama_id: 'bot-7' })
+  // some older fights between the bots, so records aren't all zero
+  for (let i = 0; i < BOTS.length; i++) for (const step of [1, 4]) {
+    RPC.duel(db, `bot-${i}`, { p_opponent: `bot-${(i + step) % BOTS.length}`, p_ranked: true }, r, '2000-01-03')
+  }
 }
 
 function insertRow(db, table, row) {
   const key = PK[table]
-  if (row[key] == null) { db.seq[table] = (db.seq[table] || 0) + 1; row = { ...row, [key]: db.seq[table] } }
+  if (key && row[key] == null) { db.seq[table] = (db.seq[table] || 0) + 1; row = { ...row, [key]: db.seq[table] } }
   db[table].push(row)
   return row
 }
@@ -136,9 +150,9 @@ function embed(db, table, row, select) {
 }
 
 function tableRows(db, table) {
-  if (table !== 'leaderboard') return db[table] || []
-  const user = (id) => db.users.find(u => u.id === id)
-  return db.user_ranks.map(r => ({ username: user(r.user_id)?.username, avatar_character_id: user(r.user_id)?.avatar_character_id, current_rank: r.current_rank, season_points: r.season_points, all_time_points: r.all_time_points, is_legend: r.is_legend }))
+  if (table === 'leaderboard') return leaderboardRows(db)
+  if (table === 'guild_leaderboard') return guildRows(db)
+  return db[table] || []
 }
 
 function query(table) {
@@ -146,6 +160,7 @@ function query(table) {
   const b = {
     select(cols = '*') { q.select = cols; q.returning = true; return b },
     eq(col, v) { filters.push(r => same(r[col], v)); return b },
+    in(col, values) { filters.push(r => values.some(v => same(r[col], v))); return b },
     or(expr) { const conds = splitTop(expr); filters.push(r => conds.some(c => matchCond(r, c))); return b },
     ilike(col, pat) { const needle = pat.replace(/%/g, '').toLowerCase(); filters.push(r => String(r[col] ?? '').toLowerCase().includes(needle)); return b },
     order(col, { ascending = true } = {}) { q.order = [col, ascending]; return b },
@@ -164,7 +179,9 @@ function query(table) {
       const added = []
       for (const v of q.values) {
         if (table === 'party_slots' && db.party_slots.some(s => same(s.party_id, v.party_id) && (same(s.character_id, v.character_id) || (s.slot_type === v.slot_type && same(s.slot_position, v.slot_position)))))
-          return { data: null, error: { message: 'That character or slot is already in your party' } }
+          return { data: null, error: { message: 'That character or slot is already in your lineup' } }
+        if (table === 'nakama' && db.nakama.some(n => same(n.user_id, v.user_id) && same(n.nakama_id, v.nakama_id)))
+          return { data: null, error: { message: 'Already your nakama' } }
         added.push(insertRow(db, table, { ...v }))
       }
       save(db)
@@ -191,10 +208,23 @@ function query(table) {
   return b
 }
 
+// the database functions the pages call
+async function rpc(name, args = {}) {
+  const db = await loadDb()
+  try {
+    const data = RPC[name](db, ME, args)
+    save(db)
+    return { data: data ?? null, error: null }
+  } catch (e) {
+    return { data: null, error: { message: e.message } }
+  }
+}
+
 export function createDemoClient() {
   const session = { user: { id: ME, email: 'demo@gyokan.gg' } }
   return {
     from: query,
+    rpc,
     auth: {
       getSession: async () => ({ data: { session }, error: null }),
       signOut: async () => { exitDemo(); return { error: null } },

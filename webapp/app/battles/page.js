@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase'
 import PageSkeleton from '../../components/Skeleton'
 import { nextBattle, POWER_HEX } from '../../lib/game'
 import Icon from '../../components/Icon'
-import { Screen, PageHead, Panel } from '../../components/Manga'
+import { Screen, PageHead, Panel, Caption } from '../../components/Manga'
 
 const FIXTURE_FIELDS = `
   fixture_id,
@@ -16,6 +16,37 @@ const FIXTURE_FIELDS = `
 
 // PostgREST returns a one-to-one embed as an object, older setups as an array
 const one = (r) => Array.isArray(r) ? r[0] : r
+
+// your latest ranked fights, either side
+function Duels({ duels, me, onFind }) {
+  return (
+    <Panel i={1} className="hov mb-3" pageClass="flex flex-col">
+      <Caption>One on one</Caption>
+      {duels.length === 0 ? (
+        <p className="muted text-sm px-4 pt-3">No ranked fights yet. Challenge a guild mate, your nakama or anyone on the leaderboard.</p>
+      ) : (
+        <ul className="divide-y-2 divide-current/20 px-4 pt-1">
+          {duels.map(d => {
+            const sent = d.challenger_id === me
+            const outcome = d.winner_id == null ? 'Draw' : d.winner_id === me ? 'Won' : 'Lost'
+            return (
+              <li key={d.id} className="flex items-center gap-3 py-2.5">
+                <span className={`poster text-base w-16 text-center py-1 flex-shrink-0 ${outcome === 'Won' ? 'bg-[var(--spot)] text-white' : 'border-2 border-current/40'}`}>{outcome}</span>
+                <span className="flex-1 min-w-0 text-sm font-semibold truncate">{sent ? 'You challenged' : 'Challenged by'} {d.name}</span>
+                <span className="poster text-xl whitespace-nowrap">{sent ? d.challenger_score : d.opponent_score}–{sent ? d.opponent_score : d.challenger_score}</span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      <div className="grid grid-cols-3 gap-2 p-4">
+        {[['Guild', '/guild'], ['Nakama', '/nakama'], ['Anyone', '/leaderboard']].map(([label, path]) => (
+          <button key={path} onClick={() => onFind(path)} className="btn text-base py-2.5">{label}</button>
+        ))}
+      </div>
+    </Panel>
+  )
+}
 
 function Fixture({ fixture, mine, onOpen, index = 0 }) {
   const result = one(fixture.results)
@@ -66,12 +97,22 @@ export default function Battles() {
   const [otherFixtures, setOtherFixtures] = useState([])
   const [mine, setMine] = useState(new Set())
   const [gameweek, setGameweek] = useState(null)
+  const [duels, setDuels] = useState([])
+  const [uid, setUid] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
+
+      const me = session.user.id
+      setUid(me)
+      const { data: fought } = await supabase.from('duels').select('id, challenger_id, opponent_id, challenger_score, opponent_score, winner_id')
+        .or(`challenger_id.eq.${me},opponent_id.eq.${me}`).order('created_at', { ascending: false }).limit(5)
+      const others = (fought || []).map(d => d.challenger_id === me ? d.opponent_id : d.challenger_id)
+      const { data: names } = others.length ? await supabase.from('leaderboard').select('user_id, username').in('user_id', others) : { data: [] }
+      setDuels((fought || []).map((d, i) => ({ ...d, name: names?.find(n => n.user_id === others[i])?.username || 'a player' })))
 
       const [{ data: gw }, { data: party }] = await Promise.all([
         supabase.from('gameweeks').select('*').order('gameweek_id', { ascending: false }).limit(1).maybeSingle(),
@@ -117,13 +158,15 @@ export default function Battles() {
         ? `Gameweek ${gameweek.gameweek_number} · ${new Date(gameweek.battle_date).toDateString()}`
         : 'Battles happen every Thursday'} />
 
+      <Duels duels={duels} me={uid} onFind={path => router.push(path)} />
+
       {!gameweek ? (
         <Panel i={1} className="max-w-xl mx-auto" pageClass="flex flex-col items-center text-center py-12 px-5">
           <div className="tone absolute -z-10 inset-0" aria-hidden="true" />
           <Icon name="swords" size={56} />
           <h2 className="poster text-3xl mt-5 mb-3">No battles yet</h2>
           <p className="muted text-sm leading-relaxed max-w-xs">
-            Every Thursday all characters are paired at random and fight. Build your party and come back then.
+            Every Thursday all characters are paired at random and fight. Build your lineup and come back then.
           </p>
           <p className="label muted mt-8 mb-2">Next battle night</p>
           <p className="poster text-2xl">
@@ -142,9 +185,9 @@ export default function Battles() {
             </>
           )}
           {mine.size === 0 && (
-            <button onClick={() => router.push('/party')} className="box toc hov press p-4 text-left md:col-span-full">
+            <button onClick={() => router.push('/lineup')} className="box toc hov press p-4 text-left md:col-span-full">
               <span className="poster block text-xl" style={{ color: 'var(--spot-text)' }}>You had no fighters this week</span>
-              <span className="block muted text-sm mt-1.5">Build your party before Thursday to score</span>
+              <span className="block muted text-sm mt-1.5">Build your lineup before Thursday to score</span>
             </button>
           )}
           <div className="mt-3 md:col-span-full"><h2 className="caption poster text-xl">Around the arena</h2></div>

@@ -10,7 +10,7 @@ import AvatarPicker from '../../components/AvatarPicker'
 import { fetchAvatars, avatarFor } from '../../lib/avatar'
 import { BUDGET, SLOT_DEFS, RANKS, formatGold, formatPoints, nextBattle, nextRank, rankInfo } from '../../lib/game'
 
-// squad strip order: the same front-to-bench order as the party formation
+// squad strip order: the same front-to-bench order as the lineup formation
 const SQUAD = SLOT_DEFS.flatMap(def => Array.from({ length: def.count }, (_, i) => ({ def, position: i + 1 })))
 // full slot names don't fit five-across on a phone
 const SHORT = { Champion: 'Champ', Specialist: 'Spec', Support: 'Supp', Medic: 'Medic', Sub: 'Sub' }
@@ -71,7 +71,7 @@ export default function Dashboard() {
         supabase.from('user_ranks').select('*').eq('user_id', uid).maybeSingle(),
         supabase.from('parties').select('id').eq('user_id', uid).maybeSingle(),
         supabase.from('gameweeks').select('gameweek_id, gameweek_number').order('gameweek_id', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('leaderboard').select('username, season_points').order('season_points', { ascending: false }).limit(100),
+        supabase.from('leaderboard').select('username, season_points, guild_name, guild_tag').order('season_points', { ascending: false }).limit(100),
       ])
 
       setUser(userData)
@@ -111,6 +111,7 @@ export default function Dashboard() {
   const hasMedic = slots.some(s => s.slot_type === 'Medic')
   // same order as the Leaderboard page, so both show the same position
   const place = board.findIndex(r => r.username === user?.username)
+  const mine = board[place]
   const rival = place > 0 ? board[place - 1] : board[place + 1]
   const gap = rival ? formatPoints(Math.abs(rival.season_points - seasonPoints)) : 0
   const standing = place < 0 ? (board.length ? 'Outside the top 100' : 'Leaderboard unavailable')
@@ -118,11 +119,11 @@ export default function Dashboard() {
     : place > 0 ? `${gap} pts behind ${rival.username}`
     : `${gap} pts ahead of ${rival.username}`
 
-  // derived from the real party state, nothing invented
+  // derived from the real lineup state, nothing invented
   const missions = [
-    { label: 'Fill all 10 slots', value: `${partyCount}/10`, done: partyCount === 10, path: '/party' },
-    { label: 'Recruit a Medic', value: hasMedic ? '1/1' : '0/1', done: hasMedic, path: '/party' },
-    { label: 'Stay within budget', value: formatGold(goldLeft), done: partyCount > 0 && goldLeft >= 0, path: '/party' },
+    { label: 'Fill all 10 slots', value: `${partyCount}/10`, done: partyCount === 10, path: '/lineup' },
+    { label: 'Recruit a Medic', value: hasMedic ? '1/1' : '0/1', done: hasMedic, path: '/lineup' },
+    { label: 'Stay within budget', value: formatGold(goldLeft), done: partyCount > 0 && goldLeft >= 0, path: '/lineup' },
     { label: 'Score on battle night', value: `${formatPoints(weekPoints)} pts`, done: weekPoints > 0, path: '/battles' },
   ]
   const missionsDone = missions.filter(m => m.done).length
@@ -141,13 +142,19 @@ export default function Dashboard() {
           {/* the sidebar already carries the logo from md up */}
           <Wordmark className="w-48 md:hidden" />
           <p className="poster text-5xl lg:text-3xl hidden md:block">Gyokan <span style={{ color: 'var(--spot)' }}>Legends</span></p>
-          <p className="label muted">{week ? `Chapter ${week.gameweek_number}` : 'Chapter 0'}</p>
+          <div className="flex items-center gap-3 min-w-0">
+            {/* no room on narrower screens, where the nav already has Guild */}
+            <button onClick={() => router.push('/guild')} className="hov-card label border-2 border-[var(--line)] px-2 py-2 min-w-0 truncate hidden lg:block">
+              {mine?.guild_name ? <><span style={{ color: 'var(--spot-text)' }}>{mine.guild_tag}</span> · {mine.guild_name}</> : 'Join a guild'}
+            </button>
+            <p className="label muted whitespace-nowrap">{week ? `Chapter ${week.gameweek_number}` : 'Chapter 0'}</p>
+          </div>
         </div>
 
         <div className="home-grid grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-12 lg:gap-2.5">
 
           {/* cover */}
-          <Panel i={1} className="hov lean-a md:col-span-2 lg:col-span-8" pageClass="grid grid-cols-[minmax(0,1fr)_42%] lg:grid-cols-[minmax(0,1fr)_34%] lg:grid-rows-[minmax(0,1fr)_auto]">
+          <Panel i={1} className="hov lean-a md:col-span-2 lg:col-span-8" pageClass="grid grid-cols-[minmax(0,1fr)_34%] min-[360px]:grid-cols-[minmax(0,1fr)_42%] lg:grid-cols-[minmax(0,1fr)_34%] lg:grid-rows-[minmax(0,1fr)_auto]">
             <div className="tone absolute -z-10 inset-0" style={{ '--tone-angle': '45deg' }} aria-hidden="true" />
             <div className="@container flex flex-col items-start gap-5 pb-5 lg:gap-2 lg:pb-2 lg:min-h-0">
               <p className="caption label">Welcome back</p>
@@ -173,7 +180,7 @@ export default function Dashboard() {
             <button onClick={() => { setPickError(''); setPicking(true) }} aria-label="Change your profile picture"
               className="art relative min-h-[15rem] lg:min-h-0 overflow-hidden border-l-[3px] border-[var(--line)]">
               {avatar && <img src={avatar.image_url} alt={avatar.name} className="absolute inset-0 w-full h-full object-cover object-top" />}
-              <span className="label absolute left-0 bottom-0 bg-[var(--ink)] text-[var(--paper)] px-3 py-2 !text-[0.625rem]">Change picture</span>
+              <span className="label !whitespace-normal text-left max-w-full absolute left-0 bottom-0 bg-[var(--ink)] text-[var(--paper)] px-3 py-2 !text-[0.625rem]">Change picture</span>
             </button>
 
             <div className="col-span-2 border-t-[3px] border-[var(--line)] px-4 md:px-6 py-4 lg:py-2 lg:pr-[calc(var(--s)+16px)]">
@@ -211,7 +218,7 @@ export default function Dashboard() {
                   const c = slots.find(s => s.slot_type === def.type && s.slot_position === position)?.characters
                   return (
                     <li key={`${def.type}-${position}`} className="min-w-0 lg:min-h-[4.5rem]">
-                      <button onClick={() => router.push('/party')} aria-label={c ? `${c.name}, ${def.type}, rated ${c.overall}` : `Empty ${def.type} slot`}
+                      <button onClick={() => router.push('/lineup')} aria-label={c ? `${c.name}, ${def.type}, rated ${c.overall}` : `Empty ${def.type} slot`}
                         className="hov-thumb w-full block text-left lg:h-full">
                         <span className="art relative block overflow-hidden border-2 border-[var(--line)] lg:h-full">
                           {c

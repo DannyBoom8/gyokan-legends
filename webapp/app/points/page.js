@@ -67,7 +67,7 @@ export default function Points() {
             <Icon name="chart" size={48} />
             <h2 className="poster text-3xl mt-4 mb-3">No points yet</h2>
             <p className="muted text-sm leading-relaxed max-w-xs">
-              Your breakdown will appear here after your first Thursday battle. Make sure your party is ready.
+              Your breakdown will appear here after your first Thursday battle. Make sure your lineup is ready.
             </p>
           </Panel>
         ) : (

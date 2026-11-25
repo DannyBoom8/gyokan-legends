@@ -30,7 +30,7 @@ export default function BottomNav({ active }) {
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
     )},
-    { id: 'party', label: 'Party', path: '/party', icon: (a) => (
+    { id: 'lineup', label: 'Lineup', path: '/lineup', icon: (a) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
@@ -38,6 +38,7 @@ export default function BottomNav({ active }) {
         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
       </svg>
     )},
+    { id: 'guild', label: 'Guild', path: '/guild', icon: () => <Icon name="shield" size={24} /> },
     { id: 'battles', label: 'Battles', path: '/battles', icon: (a) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
@@ -57,6 +58,7 @@ export default function BottomNav({ active }) {
   ]
 
   const moreItems = [
+    { id: 'nakama', label: 'Nakama', icon: 'users', path: '/nakama' },
     { id: 'games', label: 'Games', icon: 'gamepad', path: '/games' },
     { id: 'characters', label: 'Characters', icon: 'cards', path: '/characters' },
     { id: 'points', label: 'Points', icon: 'chart', path: '/points' },
@@ -146,7 +148,7 @@ export default function BottomNav({ active }) {
                 }}
                 className="mn-item press flex-1 min-w-0 flex flex-col items-center gap-1.5 py-3">
                 {tab.icon(isActive)}
-                <span className="mn-text text-sm">{tab.label}</span>
+                <span className="mn-text text-xs min-[400px]:text-sm">{tab.label}</span>
               </button>
             )
           })}

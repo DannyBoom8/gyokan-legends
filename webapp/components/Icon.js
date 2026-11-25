@@ -1,5 +1,7 @@
 // One outline icon set, 1.5 stroke to match regular-weight text. Colour comes from currentColor.
 const PATHS = {
+  shield: <><path d="M12 3l8 3v6c0 4.6-3.2 7.6-8 9-4.8-1.4-8-4.4-8-9V6z" /><path d="M12 8v8M8.5 11.5h7" /></>,
+  users: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5" /><path d="M16 5a3.5 3.5 0 0 1 0 6.5M18 15c2 .7 3.2 2.4 3.5 5" /></>,
   cards: <><rect x="3" y="6" width="11" height="15" rx="2.5" /><path d="M8 3.5h10.5A2.5 2.5 0 0 1 21 6v11" /><path d="M6.5 12.5h4M6.5 16h2.5" /></>,
   chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
   trophy: <><path d="M8 4h8v6a4 4 0 0 1-8 0z" /><path d="M8 6H4v1a3 3 0 0 0 3 3M16 6h4v1a3 3 0 0 1-3 3" /><path d="M12 14v4M8.5 20h7" /></>,
