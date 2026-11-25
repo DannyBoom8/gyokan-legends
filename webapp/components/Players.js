@@ -13,7 +13,7 @@ export function Tabs({ tabs, value, onChange, label }) {
   return (
     <div role="group" aria-label={label} className="flex gap-2 mb-3">
       {tabs.map(([id, text]) => (
-        <button key={id} onClick={() => onChange(id)} aria-pressed={value === id} className="btn bg-[var(--panel)] flex-1 sm:flex-none text-lg px-5 py-2.5">{text}</button>
+        <button key={id} onClick={() => onChange(id)} aria-pressed={value === id} className="btn bg-[var(--panel)] flex-1 sm:flex-none whitespace-nowrap text-lg px-2 sm:px-5 py-2.5">{text}</button>
       ))}
     </div>
   )
@@ -26,6 +26,15 @@ export const Portrait = ({ player, avatars, className = 'w-11 h-[52px]' }) => (
 )
 
 const place = (i) => `poster text-2xl w-11 h-11 flex items-center justify-center flex-shrink-0 ${i < 3 ? 'bg-[var(--spot)] text-white' : 'muted'}`
+
+// earned by winning a cup; the number shows from the second win
+export const ChampionBadge = ({ wins, children }) => wins > 0 && (
+  <span className="label flex-shrink-0 inline-flex items-center gap-1 bg-[var(--spot)] text-white px-1.5 py-1">
+    <Icon name="trophy" size={14} />
+    {children}{wins > 1 && <span aria-hidden="true">×{wins}</span>}
+    <span className="sr-only"> Cup champion, {wins} {wins === 1 ? 'win' : 'wins'}</span>
+  </span>
+)
 
 // a ranked list of players; tapping one opens their card
 export function PlayerList({ rows, me, avatars, onOpen, showGuild = true }) {
@@ -46,12 +55,15 @@ export function PlayerList({ rows, me, avatars, onOpen, showGuild = true }) {
                     {r.username}
                     {r.is_legend && <><Icon name="crown" size={16} className="inline ml-1.5 -mt-1" /><span className="sr-only"> Legend</span></>}
                   </span>
-                  <span className="label block truncate !tracking-[0.08em] mt-1.5">
+                  <span className="flex items-center gap-2 min-w-0 mt-1.5">
+                  <ChampionBadge wins={r.cup_wins} />
+                  <span className="label block truncate !tracking-[0.08em]">
                     <span className={rank.color}>{rank.name}</span>
                     {showGuild && r.guild_tag && <span className="muted"> · {r.guild_tag}</span>}
                     {!showGuild && r.guild_role === 'leader' && <span className="muted"> · Leader</span>}
                     <span className="muted hidden sm:inline"> · {record(r)}</span>
                     {isMe && <span> · you</span>}
+                  </span>
                   </span>
                 </span>
                 <span className="poster text-3xl">{formatPoints(r.season_points)}<span className="sr-only"> season points</span></span>
@@ -141,9 +153,10 @@ export function PlayerSheet({ player, me, avatars, onClose, onChange }) {
       <div className="flex items-center gap-3 p-4 border-b-[3px] border-current">
         <Portrait player={player} avatars={avatars} className="w-16 h-20" />
         <div className="flex-1 min-w-0">
-          <h2 className="poster text-2xl sm:text-3xl break-words">{player.username}</h2>
+          <h2 className="poster text-xl min-[360px]:text-2xl sm:text-3xl break-words">{player.username}</h2>
           <p className="label muted !whitespace-normal mt-1.5">{player.guild_name ? `${player.guild_tag} · ${player.guild_name}` : 'No guild'} · {COUNTRIES[player.country_code] || player.country_code}</p>
           <p className={`label mt-1 ${rankInfo(player.current_rank).color}`}>{player.current_rank}</p>
+          {player.cup_wins > 0 && <p className="mt-2"><ChampionBadge wins={player.cup_wins}><span aria-hidden="true">Cup champion </span></ChampionBadge></p>}
         </div>
         <button onClick={onClose} className="label self-start border-2 border-current px-3 py-2">Close</button>
       </div>
@@ -152,8 +165,8 @@ export function PlayerSheet({ player, me, avatars, onClose, onChange }) {
         {!bout && (
           <dl className="grid grid-cols-3 divide-x-2 divide-current/25 p-4">
             {[['Season', formatPoints(player.season_points)], ['All-time', formatPoints(player.all_time_points)], ['Ranked fights', record(player)]].map(([k, v]) => (
-              <div key={k} className="px-3 first:pl-0">
-                <dt className="label muted !text-[0.625rem]">{k}</dt>
+              <div key={k} className="min-w-0 px-2 min-[360px]:px-3 first:pl-0">
+                <dt className="label muted !text-[0.625rem] !whitespace-normal">{k}</dt>
                 <dd className="poster text-lg sm:text-2xl whitespace-nowrap mt-1.5">{v}</dd>
               </div>
             ))}

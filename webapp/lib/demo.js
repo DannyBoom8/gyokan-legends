@@ -1,11 +1,12 @@
 // Demo mode: a stand-in for the Supabase client that keeps a small game world in this browser.
 // It answers the same query calls the pages make, so every page works without the backend.
 // Fight and scoring rules mirror pipeline/battle.py; keep them in sync.
-import { BUDGET, SLOT_DEFS, DRAW_POINTS, MEDIC_BOOST } from './game'
+import { BUDGET, SLOT_DEFS, DRAW_POINTS, MEDIC_BOOST } from './game.js'
 import { RPC, fight, leaderboardRows, guildRows } from './guild-rules.js'
+import { SQUAD_RPC, seedSquads } from './squad-rules.js'
 
 const FLAG = 'gyokan-demo'
-const STORE = 'gyokan-demo-db-v3' // bump when the demo tables change
+const STORE = 'gyokan-demo-db-v6' // bump when the demo tables change
 const ME = 'demo-player'
 const RANKS = [[500, 'Legendary'], [350, 'Sovereign'], [220, 'Warlord'], [110, 'Veteran'], [40, 'Ronin'], [0, 'Rookie']]
 const SLOT_POINTS = Object.fromEntries(SLOT_DEFS.map(d => [d.type, d.points]))
@@ -45,7 +46,7 @@ function randomParty(chars, r) {
 
 function seed(chars) {
   const r = rng(7)
-  const db = { characters: chars.map(c => ({ ...c, is_active: true })), users: [], user_ranks: [], parties: [], party_slots: [], seasons: [{ season_id: 1, name: 'Season 1', is_active: true }], gameweeks: [], fixtures: [], results: [], fantasy_points: [], guilds: [], guild_members: [], guild_parties: [], guild_party_members: [], nakama: [], duels: [], seq: {} }
+  const db = { characters: chars.map(c => ({ ...c, is_active: true })), users: [], user_ranks: [], parties: [], party_slots: [], seasons: [{ season_id: 1, name: 'Season 1', is_active: true }], gameweeks: [], fixtures: [], results: [], fantasy_points: [], guilds: [], guild_members: [], guild_parties: [], guild_party_members: [], nakama: [], duels: [], squads: [], fighters: [], wars: [], cups: [], seq: {} }
   for (const [id, username] of [[ME, 'DemoPlayer'], ...BOTS.map((b, i) => [`bot-${i}`, b])]) {
     db.users.push({ id, username, country_code: 'NG' })
     db.user_ranks.push({ user_id: id, current_rank: 'Rookie', season_points: 0, all_time_points: 0, is_legend: false })
@@ -54,6 +55,7 @@ function seed(chars) {
   }
   for (let w = 0; w < 3; w++) battleNight(db, r)
   seedSocial(db, r)
+  seedSquads(db, BOTS.map((_, i) => `bot-${i}`)) // the demo player picks their own
   return db
 }
 
@@ -65,6 +67,17 @@ function seedSocial(db, r) {
   }
   const raid = RPC.create_party(db, 'bot-0', { p_name: 'Thursday Raiders', p_occasion: 'battle' })
   RPC.join_party(db, 'bot-1', { p_party: raid })
+  // rival battle parties, so there is someone to go to war with
+  const parties = [
+    ['battle', 'Capital Vanguard', 'bot-3', 'bot-6', 'bot-7'], ['battle', 'Harbour Blades', 'bot-9', 'bot-10'],
+    // and a field for the cup; the first is in the demo player's guild, with room to join
+    ['tournament', 'Leaf Contenders', 'bot-2', 'bot-4'], ['tournament', 'Rock Garden', 'bot-3', 'bot-6'],
+    ['tournament', 'Abuja Prime', 'bot-7', 'bot-8'], ['tournament', 'Tide Breakers', 'bot-9', 'bot-10'],
+  ]
+  for (const [occasion, name, captain, ...crew] of parties) {
+    const party = RPC.create_party(db, captain, { p_name: name, p_occasion: occasion })
+    for (const who of crew) RPC.join_party(db, who, { p_party: party })
+  }
   db.nakama.push({ user_id: ME, nakama_id: 'bot-1' }, { user_id: ME, nakama_id: 'bot-7' })
   // some older fights between the bots, so records aren't all zero
   for (let i = 0; i < BOTS.length; i++) for (const step of [1, 4]) {
@@ -212,7 +225,7 @@ function query(table) {
 async function rpc(name, args = {}) {
   const db = await loadDb()
   try {
-    const data = RPC[name](db, ME, args)
+    const data = (RPC[name] || SQUAD_RPC[name])(db, ME, args)
     save(db)
     return { data: data ?? null, error: null }
   } catch (e) {

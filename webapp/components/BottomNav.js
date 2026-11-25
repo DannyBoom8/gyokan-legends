@@ -6,10 +6,12 @@ import { isDemo, runDemoBattle } from '../lib/demo'
 import Icon from './Icon'
 import { Wordmark } from './Logo'
 import ThemeToggle from './ThemeToggle'
+import { isFantasy } from './FantasyTabs'
 
 const noop = () => () => {}
 
-export default function BottomNav({ active }) {
+export default function BottomNav({ active: page }) {
+  const active = isFantasy(page) ? 'fantasy' : page
   const [showMore, setShowMore] = useState(false)
   const router = useRouter()
   const demo = useSyncExternalStore(noop, isDemo, () => false)
@@ -30,24 +32,9 @@ export default function BottomNav({ active }) {
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
     )},
-    { id: 'lineup', label: 'Lineup', path: '/lineup', icon: (a) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    )},
+    { id: 'squad', label: 'Squad', path: '/squad', icon: () => <Icon name="flame" size={24} /> },
     { id: 'guild', label: 'Guild', path: '/guild', icon: () => <Icon name="shield" size={24} /> },
-    { id: 'battles', label: 'Battles', path: '/battles', icon: (a) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill={a ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14.5 17.5L3 6V3h3l11.5 11.5"/>
-        <path d="M13 19l6-6"/>
-        <path d="M16 16l4 4"/>
-        <path d="M19 21l2-2"/>
-      </svg>
-    )},
-    { id: 'leaderboard', label: 'Ranks', full: 'Leaderboard', path: '/leaderboard', icon: () => <Icon name="trophy" size={24} /> },
+    { id: 'fantasy', label: 'Fantasy', path: '/lineup', icon: () => <Icon name="medal" size={24} /> },
     { id: 'more', label: 'More', path: null, icon: () => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="5" cy="12" r="2"/>
@@ -60,9 +47,6 @@ export default function BottomNav({ active }) {
   const moreItems = [
     { id: 'nakama', label: 'Nakama', icon: 'users', path: '/nakama' },
     { id: 'games', label: 'Games', icon: 'gamepad', path: '/games' },
-    { id: 'characters', label: 'Characters', icon: 'cards', path: '/characters' },
-    { id: 'points', label: 'Points', icon: 'chart', path: '/points' },
-    { id: 'rules', label: 'How to play', icon: 'scroll', path: '/rules' },
   ]
 
   const action = 'mn-item w-full flex items-center gap-4 px-5 py-3 text-left disabled:opacity-50'
@@ -76,7 +60,7 @@ export default function BottomNav({ active }) {
             const on = active === item.id
             return (
               <button key={item.id} onClick={() => router.push(item.path)} aria-current={on ? 'page' : undefined}
-                className="mn-item press flex-1 min-h-[2.75rem] max-h-16 flex items-center gap-4 px-5 text-left">
+                className="mn-item press flex-1 min-h-[2.375rem] max-h-16 flex items-center gap-4 px-5 text-left">
                 {typeof item.icon === 'function' ? item.icon(on) : <Icon name={item.icon} size={24} />}
                 <span className="mn-text text-xl">{item.full || item.label}</span>
               </button>

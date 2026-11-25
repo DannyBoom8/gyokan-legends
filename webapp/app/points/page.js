@@ -47,7 +47,7 @@ export default function Points() {
 
   return (
     <Screen nav="points" width="max-w-3xl">
-      <PageHead title="Points" sub="Your scoring log" back="/dashboard" backLabel="Home" />
+      <PageHead title="Points" sub="Your scoring log" />
 
       <div className="flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-3">

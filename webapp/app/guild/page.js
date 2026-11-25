@@ -8,6 +8,8 @@ import { COUNTRIES, GUILD_MAX, OCCASIONS, PARTY_MAX, formatPoints } from '../../
 import PageSkeleton from '../../components/Skeleton'
 import { Screen, PageHead, Panel, Caption } from '../../components/Manga'
 import { PlayerList, GuildList, PlayerSheet, Portrait, Tabs, Empty } from '../../components/Players'
+import GuildWar from '../../components/GuildWar'
+import GuildCup from '../../components/GuildCup'
 
 export default function Guild() {
   const [data, setData] = useState(null)
@@ -35,7 +37,12 @@ export default function Guild() {
     setData({ me, country, failed: !!failed, guilds: guilds || [], members: members || [], parties: parties || [], seats: seats || [] })
   }
 
-  useEffect(() => { fetchAvatars().then(setAvatars); load() }, [])
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get('tab')
+    if (['parties', 'war', 'cup'].includes(wanted)) setTab(wanted)
+    fetchAvatars().then(setAvatars)
+    load()
+  }, [])
 
   // every change goes through a database function, then the page reloads what it shows
   const act = async (name, args, done) => {
@@ -104,14 +111,14 @@ export default function Guild() {
         <dl className="grid grid-cols-3 divide-x-2 divide-current/25 p-4">
           {stats.map(([k, v]) => (
             <div key={k} className="px-3 first:pl-0">
-              <dt className="label muted !text-[0.625rem]">{k}</dt>
+              <dt className="label muted !text-[0.625rem] !whitespace-normal">{k}</dt>
               <dd className="poster text-3xl mt-1.5">{v}</dd>
             </div>
           ))}
         </dl>
       </Panel>
 
-      <Tabs label="Guild" tabs={[['members', 'Members'], ['parties', `Parties (${parties.length})`]]} value={tab} onChange={t => { setTab(t); setError('') }} />
+      <Tabs label="Guild" tabs={[['members', 'Members'], ['parties', 'Parties'], ['war', 'War'], ['cup', 'Cup']]} value={tab} onChange={t => { setTab(t); setError('') }} />
 
       {tab === 'members' && <PlayerList rows={members} me={me.user_id} avatars={avatars} onOpen={setSelected} showGuild={false} />}
 
@@ -165,7 +172,7 @@ export default function Guild() {
                       <p className="text-sm">
                         {p.occasion === 'battle'
                           ? <><span className="poster text-xl">{formatPoints(crew.reduce((n, m) => n + Number(m.week_points || 0), 0))} pts</span> <span className="muted">last battle night</span></>
-                          : <span className="muted">Tournaments open soon</span>}
+                          : <button onClick={() => setTab('cup')} className="underline font-semibold">This week&apos;s cup</button>}
                       </p>
                       <button disabled={busy || (!joined && (elsewhere || full))} onClick={() => act(joined ? 'leave_party' : 'join_party', { p_party: p.id })}
                         className={`${joined ? 'btn' : 'btn-spot'} text-base px-4 py-2 flex-shrink-0`}>
@@ -179,6 +186,8 @@ export default function Guild() {
           )}
         </>
       )}
+      {tab === 'war' && <GuildWar me={me} guilds={guilds} parties={parties} seats={seats} onParties={() => setTab('parties')} />}
+      {tab === 'cup' && <GuildCup me={me} parties={parties} seats={seats} onParties={() => setTab('parties')} onPlayed={load} />}
       {sheet}
     </Screen>
   )

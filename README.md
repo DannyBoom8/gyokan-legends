@@ -13,8 +13,15 @@ they fight. Wins score points by slot, points climb you from Rookie to Legendary
 - `.github/workflows/battles.yml` – runs `battle.py` every Thursday 19:00 UTC (or on demand from the Actions tab).
 
 Game numbers live in `pipeline/battle.py` and `webapp/lib/game.js`; change both together.
+The fantasy league (lineup, battle night, ranks, points, scouting, rules) is the app's Fantasy section: its pages share
+the tabs in `webapp/components/FantasyTabs.js`.
 Guild, party and fight rules live in `sql/005_guilds.sql`, with demo mode's copy in `webapp/lib/guild-rules.js`.
 The tables `parties` and `party_slots` hold a player's lineup; guild parties are `guild_parties`.
+
+Squad (demo only so far): engine and balance numbers in `webapp/lib/squad.js`, player actions in
+`webapp/lib/squad-rules.js`, which also holds guild wars (battle party against battle party), the weekly cup (a knockout between tournament
+parties with a level limit) and what credits buy. Cup winners wear a champion badge.
+Lineup points are the credits. It has no database tables yet, and the server must decide every fight once it does.
 
 ## Setup
 
@@ -22,4 +29,4 @@ The tables `parties` and `party_slots` hold a player's lineup; guild parties are
 2. `pipeline/.env` and `webapp/.env.local` hold `DATABASE_URL` and the `NEXT_PUBLIC_SUPABASE_*` keys.
 3. Load characters with stats: `cd pipeline && pip install -r requirements.txt && python transform.py && python load.py`
 4. In GitHub → Settings → Secrets → Actions, add `DATABASE_URL` so the Thursday job can run.
-5. Tests: `python pipeline/test_battle.py` and `node webapp/lib/guild-rules.test.mjs`
+5. Tests: `python pipeline/test_battle.py`, `node webapp/lib/guild-rules.test.mjs` and `node webapp/lib/squad.test.mjs`

@@ -14,7 +14,7 @@ function Section({ title, i, children }) {
 export default function Rules() {
   return (
     <Screen nav="rules">
-      <PageHead title="How to play" sub="Rise. Battle. Become Legend." back />
+      <PageHead title="How to play" sub="Rise. Battle. Become Legend." />
 
       <div className="grid gap-3 md:grid-cols-2 text-[0.9375rem] leading-relaxed">
         <Section i={1} title="1. Build your lineup">

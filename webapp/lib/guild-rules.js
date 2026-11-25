@@ -130,6 +130,7 @@ export function leaderboardRows(db) {
       duel_wins: fought.filter(d => d.winner_id === r.user_id).length,
       duel_losses: fought.filter(d => d.winner_id === d.opponent_id).length,
       duel_draws: fought.filter(d => d.winner_id == null).length,
+      cup_wins: (db.cups || []).filter(c => c.champion.members?.includes(r.user_id)).length,
       week_points: db.fantasy_points.filter(p => p.user_id === r.user_id && p.gameweek_id === week).reduce((n, p) => n + p.final_points, 0),
     }
   })

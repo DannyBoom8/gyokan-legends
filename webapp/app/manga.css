@@ -43,12 +43,12 @@
   .mg { --s: 34px; }
   .mg .lean-a { --shape: polygon(0 0, 100% 0, calc(100% - var(--s)) 100%, 0 100%); }
   .mg .lean-a > .page > .pad { padding-right: calc(var(--s) + 14px); }
-  .mg .lean-a + .panel { --shape: polygon(var(--s) 0, 100% 0, 100% 100%, 0 100%); margin-left: calc(-1 * var(--s)); }
-  .mg .lean-a + .panel > .page > .pad { padding-left: calc(var(--s) + 14px); }
+  .mg .lean-a-end { --shape: polygon(var(--s) 0, 100% 0, 100% 100%, 0 100%); margin-left: calc(-1 * var(--s)); }
+  .mg .lean-a-end > .page > .pad { padding-left: calc(var(--s) + 14px); }
   .mg .lean-b { --shape: polygon(0 0, calc(100% - var(--s)) 0, 100% 100%, 0 100%); }
   .mg .lean-b > .page > .pad { padding-right: calc(var(--s) + 14px); }
-  .mg .lean-b + .panel { --shape: polygon(0 0, 100% 0, 100% 100%, var(--s) 100%); margin-left: calc(-1 * var(--s)); }
-  .mg .lean-b + .panel > .page > .pad { padding-left: calc(var(--s) + 14px); }
+  .mg .lean-b-end { --shape: polygon(0 0, 100% 0, 100% 100%, var(--s) 100%); margin-left: calc(-1 * var(--s)); }
+  .mg .lean-b-end > .page > .pad { padding-left: calc(var(--s) + 14px); }
 }
 
 /* narration box tucked into a panel corner */
@@ -67,7 +67,7 @@
 .mg .btn, .mg .btn-spot { font-family: var(--font-poster), Impact, sans-serif; text-transform: uppercase; letter-spacing: 0.03em; line-height: 1; }
 .mg .btn { border: 2px solid var(--line); transition: background-color 150ms ease, color 150ms ease, scale 150ms var(--ease-out), translate 150ms var(--ease-out), box-shadow 150ms var(--ease-out); }
 .mg .btn:active:not(:disabled) { scale: 0.97; }
-.mg .btn[aria-pressed="true"], .mg .btn[aria-selected="true"] { background: var(--spot); border-color: var(--spot); color: #fff; }
+.mg .btn[aria-pressed="true"], .mg .btn[aria-selected="true"], .mg .btn[aria-current="page"] { background: var(--spot); border-color: var(--spot); color: #fff; }
 .mg :is(.btn, .btn-spot):disabled { opacity: 0.5; cursor: not-allowed; }
 
 .mg .field { width: 100%; background: var(--panel); color: var(--ink); border: 3px solid var(--line); padding: 12px 14px; font-size: 1rem; }
@@ -128,7 +128,7 @@
   .mg .hov-tile:hover > span:first-child { translate: 0 -5px; scale: 1.14; }
 
   .mg .btn-spot:hover:not(:disabled) { background: #b01a13; }
-  .mg .btn:not([aria-pressed="true"]):not([aria-selected="true"]):hover:not(:disabled) { background: color-mix(in oklab, var(--ink) 12%, var(--panel)); }
+  .mg .btn:not([aria-pressed="true"]):not([aria-selected="true"]):not([aria-current="page"]):hover:not(:disabled) { background: color-mix(in oklab, var(--ink) 12%, var(--panel)); }
   .mg :is(.btn, .btn-spot):hover:not(:disabled, :active) { translate: -2px -3px; box-shadow: 4px 5px 0 var(--line); }
   .mg .toc:hover { background: color-mix(in oklab, var(--ink) 10%, var(--panel)); }
 
@@ -149,7 +149,8 @@
 
 /* ---------- sign-in page: a manga page of faces behind a card that always fits the screen ---------- */
 /* slanted panels: each cell skews and its picture skews back */
-.faces { position: absolute; inset: 0 -3%; display: flex; flex-wrap: wrap; align-content: flex-start; overflow: hidden; background: var(--line); }
+/* isolated so a hovered face lifts above its neighbours but never above the sign-in card */
+.faces { position: absolute; inset: 0 -3%; isolation: isolate; display: flex; flex-wrap: wrap; align-content: flex-start; overflow: hidden; background: var(--line); }
 .face { --lean: -6deg; position: relative; height: calc(100% / 6); overflow: hidden; border: 3px solid var(--line); background: #12100e; transform: skewX(var(--lean)); }
 .face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; transform: skewX(calc(-1 * var(--lean))) scale(1.16); filter: grayscale(1) contrast(1.2) brightness(0.62); transition: filter 220ms ease, scale 300ms var(--ease-out); }
 .face img + img { animation: face-in 700ms ease backwards; }
@@ -206,6 +207,11 @@
 .picker[open] { display: flex; flex-direction: column; animation: pop-in 180ms var(--ease-out); }
 .picker::backdrop { background: rgb(0 0 0 / 0.7); }
 .picker .poster { font-family: var(--font-poster), Impact, sans-serif; text-transform: uppercase; }
+
+/* battle replay: the damage number lands on whoever was hit */
+.picker .hit-pop { animation: hit-pop 280ms var(--ease-out) backwards; }
+@keyframes hit-pop { from { opacity: 0; scale: 0.7; } }
+@media (prefers-reduced-motion: reduce) { .picker .hit-pop { animation: none; } }
 
 /* shared navigation: no outlines, only fills; the current page is a cut red block */
 .mn { color: var(--ink); }
