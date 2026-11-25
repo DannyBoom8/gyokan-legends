@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { byPoints } from '../lib/social'
 import { weekOf } from '../lib/guild-rules'
 import { isDemo } from '../lib/demo'
-import { CUP_LIMITS, MAX_LEVEL, cupName } from '../lib/squad'
+import { CARD_RANKS, CUP_RANKS, cupName } from '../lib/squad'
 import { Panel, Caption } from './Manga'
 import { Empty } from './Players'
 import Icon from './Icon'
@@ -14,7 +14,7 @@ import Bouts from './Bouts'
 const roundName = (fromEnd) => ['Final', 'Semi-finals', 'Quarter-finals'][fromEnd] || `${2 ** fromEnd} matches`
 
 // the weekly knockout between tournament parties from every guild
-export default function GuildCup({ me, parties, seats, onParties, onPlayed }) {
+export default function GuildCup({ me, parties, seats, onParties }) {
   const [data, setData] = useState(null)
   const [shown, setShown] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -40,7 +40,7 @@ export default function GuildCup({ me, parties, seats, onParties, onPlayed }) {
 
   const { squad, field, fieldSeats, cups, names } = data
   const played = cups.find(c => c.week === weekOf())
-  const limit = played ? played.limit : CUP_LIMITS[cups.length % CUP_LIMITS.length]
+  const limit = played ? played.limit : CUP_RANKS[cups.length % CUP_RANKS.length]
   const inParty = seats.some(s => s.user_id === me.user_id && parties.some(p => p.id === s.party_id && p.occasion === 'tournament'))
   const latest = cups[0]
 
@@ -51,7 +51,6 @@ export default function GuildCup({ me, parties, seats, onParties, onPlayed }) {
     justPlayed.current = !error && name === 'cup_play'
     await load()
     setBusy(false)
-    if (!error && name === 'cup_play') onPlayed?.() // the member list shows the new badges
   }
 
   const step = !squad ? ['Pick your squad first. It is what fights in the cup.', 'Pick squad', () => router.push('/squad')]
@@ -66,7 +65,7 @@ export default function GuildCup({ me, parties, seats, onParties, onPlayed }) {
         <Caption aside="This week">{cupName(limit)}</Caption>
         <div className="p-4">
           <p className="muted text-sm">
-            Knockout between tournament parties from every guild. {limit < MAX_LEVEL ? `Fighters above level ${limit} fight at level ${limit}.` : 'Every fighter fights at full level.'} A drawn match goes to the party with more fighters standing.
+            Knockout between tournament parties from every guild. {limit < CARD_RANKS.length - 1 ? `Cards above rank ${CARD_RANKS[limit]} fight at the top of rank ${CARD_RANKS[limit]}.` : 'Every card fights at its full rank.'} A drawn match goes to the party with more fighters standing.
           </p>
           <ul aria-label="Parties in the cup" className="flex flex-wrap gap-2 mt-3">
             {field.map(p => (

@@ -40,7 +40,7 @@ export default function Points() {
     load()
   }, [])
 
-  if (loading) return <PageSkeleton variant="list" />
+  if (loading) return <PageSkeleton nav="points" title="Points" width="max-w-3xl" />
 
   const totalThisWeek = formatPoints(points.reduce((sum, p) => sum + Number(p.final_points || 0), 0))
   const seasonPoints = formatPoints(rankData?.season_points)

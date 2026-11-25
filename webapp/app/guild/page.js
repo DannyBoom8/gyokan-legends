@@ -8,8 +8,6 @@ import { COUNTRIES, GUILD_MAX, OCCASIONS, PARTY_MAX, formatPoints } from '../../
 import PageSkeleton from '../../components/Skeleton'
 import { Screen, PageHead, Panel, Caption } from '../../components/Manga'
 import { PlayerList, GuildList, PlayerSheet, Portrait, Tabs, Empty } from '../../components/Players'
-import GuildWar from '../../components/GuildWar'
-import GuildCup from '../../components/GuildCup'
 
 export default function Guild() {
   const [data, setData] = useState(null)
@@ -39,7 +37,7 @@ export default function Guild() {
 
   useEffect(() => {
     const wanted = new URLSearchParams(window.location.search).get('tab')
-    if (['parties', 'war', 'cup'].includes(wanted)) setTab(wanted)
+    if (wanted === 'parties') setTab(wanted)
     fetchAvatars().then(setAvatars)
     load()
   }, [])
@@ -54,7 +52,7 @@ export default function Guild() {
     setBusy(false)
   }
 
-  if (!data) return <PageSkeleton variant="list" />
+  if (!data) return <PageSkeleton nav="guild" title="Guild" width="max-w-3xl" />
 
   const { me, country, guilds, members, parties, seats } = data
   const guild = guilds.find(g => g.guild_id === me.guild_id)
@@ -118,7 +116,7 @@ export default function Guild() {
         </dl>
       </Panel>
 
-      <Tabs label="Guild" tabs={[['members', 'Members'], ['parties', 'Parties'], ['war', 'War'], ['cup', 'Cup']]} value={tab} onChange={t => { setTab(t); setError('') }} />
+      <Tabs label="Guild" tabs={[['members', 'Members'], ['parties', 'Parties']]} value={tab} onChange={t => { setTab(t); setError('') }} />
 
       {tab === 'members' && <PlayerList rows={members} me={me.user_id} avatars={avatars} onOpen={setSelected} showGuild={false} />}
 
@@ -172,7 +170,7 @@ export default function Guild() {
                       <p className="text-sm">
                         {p.occasion === 'battle'
                           ? <><span className="poster text-xl">{formatPoints(crew.reduce((n, m) => n + Number(m.week_points || 0), 0))} pts</span> <span className="muted">last battle night</span></>
-                          : <button onClick={() => setTab('cup')} className="underline font-semibold">This week&apos;s cup</button>}
+                          : <button onClick={() => router.push('/battle?tab=cup')} className="underline font-semibold">This week&apos;s cup</button>}
                       </p>
                       <button disabled={busy || (!joined && (elsewhere || full))} onClick={() => act(joined ? 'leave_party' : 'join_party', { p_party: p.id })}
                         className={`${joined ? 'btn' : 'btn-spot'} text-base px-4 py-2 flex-shrink-0`}>
@@ -186,8 +184,6 @@ export default function Guild() {
           )}
         </>
       )}
-      {tab === 'war' && <GuildWar me={me} guilds={guilds} parties={parties} seats={seats} onParties={() => setTab('parties')} />}
-      {tab === 'cup' && <GuildCup me={me} parties={parties} seats={seats} onParties={() => setTab('parties')} onPlayed={load} />}
       {sheet}
     </Screen>
   )

@@ -1,40 +1,41 @@
-// Placeholders shaped like the real screens, so the layout doesn't jump when data lands.
+import { Screen, PageHead } from './Manga'
+import { Wordmark } from './Logo'
+
 export const Sk = ({ className = '', style }) => <div className={`skeleton ${className}`} style={style} />
 
-const Head = () => (
-  <div className="px-5 pt-4 pb-6 max-w-3xl mx-auto">
-    <Sk className="h-3 w-24 mb-3" />
-    <Sk className="h-8 w-48" />
-  </div>
+// an empty panel, drawn like the real ones
+const Box = ({ i, className }) => (
+  <div className={`box p-1.5 ${className}`}><Sk className="w-full h-full" style={{ animationDelay: `${i * 80}ms` }} /></div>
 )
+const boxes = (n, className) => Array.from({ length: n }, (_, i) => <Box key={i} i={i} className={className} />)
 
-const Rows = ({ n, h = 'h-16' }) => (
-  <div className="px-5 max-w-3xl mx-auto flex flex-col gap-3">
-    {Array.from({ length: n }, (_, i) => <Sk key={i} className={`${h}`} style={{ animationDelay: `${i * 80}ms` }} />)}
-  </div>
-)
+const SHAPES = {
+  list: <div className="flex flex-col gap-3">{boxes(6, 'h-20')}</div>,
+  cards: <div className="grid gap-3 md:grid-cols-2">{boxes(4, 'h-40')}</div>,
+  detail: <div className="flex flex-col gap-3"><Box i={0} className="h-72" />{boxes(2, 'h-24')}</div>,
+  dashboard: (
+    <div className="grid gap-3 lg:grid-cols-12">
+      <Box i={0} className="h-56 lg:h-[34dvh] lg:col-span-8" /><Box i={1} className="h-56 lg:h-[34dvh] lg:col-span-4" />
+      <Box i={2} className="h-44 lg:h-[30dvh] lg:col-span-8" /><Box i={3} className="h-44 lg:h-[30dvh] lg:col-span-4" />
+      {boxes(4, 'h-20 lg:h-[11dvh] lg:col-span-3')}
+    </div>
+  ),
+}
 
-export default function PageSkeleton({ variant = 'list' }) {
+// Placeholders inside the same shell as the real page (header and navigation included), so nothing jumps when data lands.
+// Give it the page's nav, title and width.
+export default function PageSkeleton({ variant = 'list', nav, title, width }) {
   return (
-    <div className="skeleton-wrap mg min-h-screen pb-28" role="status" aria-label="Loading">
-      <Head />
-      {variant === 'dashboard' && (
-        <>
-          <div className="mx-5 mb-4 max-w-3xl"><Sk className="h-52" /></div>
-          <Rows n={2} h="h-24" />
-          <div className="px-5 mt-3 grid grid-cols-2 gap-3 max-w-3xl"><Sk className="h-28" /><Sk className="h-28" /></div>
-        </>
-      )}
-      {variant === 'list' && <Rows n={6} />}
-      {variant === 'cards' && <Rows n={3} h="h-28" />}
-      {variant === 'detail' && (
-        <div className="px-5 max-w-3xl mx-auto">
-          <Sk className="h-64 mb-4" />
-          <Sk className="h-24 mb-3" />
-          <Sk className="h-24" />
+    <Screen nav={nav} width={width} fit={variant === 'dashboard' ? 'desktop' : undefined}>
+      {title ? <PageHead title={title} compact={nav === 'lineup' || nav === 'squad'} /> : (
+        <div className="border-b-4 border-[var(--line)] pb-2 mb-3">
+          {variant === 'dashboard' ? <Wordmark className="w-48 md:w-56" /> : <Sk className="h-10 w-48" />}
         </div>
       )}
-      <span className="sr-only">Loading</span>
-    </div>
+      <div className="skeleton-wrap" role="status">
+        <span className="sr-only">Loading</span>
+        <div aria-hidden="true">{SHAPES[variant]}</div>
+      </div>
+    </Screen>
   )
 }

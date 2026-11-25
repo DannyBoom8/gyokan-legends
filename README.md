@@ -9,19 +9,26 @@ they fight. Wins score points by slot, points climb you from Rookie to Legendary
   a static export served by the Cloudflare Worker `gyokan-legends`; `npm run deploy` builds and ships it.
 - `pipeline/` – Python: `extract.py` pulls characters from AniList, `transform.py` gives them stats,
   power types and gold costs, `load.py` writes them to the database, `battle.py` runs a battle night.
-- `sql/` – `schema.sql` for a fresh database, then `002` to `005` in order (005: countries, guilds, parties, nakama, fights).
+- `sql/` – `schema.sql` for a fresh database, then `002` to `005` in order (005: countries, guilds, parties, nakama, battle records).
 - `.github/workflows/battles.yml` – runs `battle.py` every Thursday 19:00 UTC (or on demand from the Actions tab).
 
 Game numbers live in `pipeline/battle.py` and `webapp/lib/game.js`; change both together.
 The fantasy league (lineup, battle night, ranks, points, scouting, rules) is the app's Fantasy section: its pages share
 the tabs in `webapp/components/FantasyTabs.js`.
-Guild, party and fight rules live in `sql/005_guilds.sql`, with demo mode's copy in `webapp/lib/guild-rules.js`.
+Guild and party rules live in `sql/005_guilds.sql`, with demo mode's copy in `webapp/lib/guild-rules.js`.
 The tables `parties` and `party_slots` hold a player's lineup; guild parties are `guild_parties`.
 
-Squad (demo only so far): engine and balance numbers in `webapp/lib/squad.js`, player actions in
-`webapp/lib/squad-rules.js`, which also holds guild wars (battle party against battle party), the weekly cup (a knockout between tournament
-parties with a level limit) and what credits buy. Cup winners wear a champion badge.
-Lineup points are the credits. It has no database tables yet, and the server must decide every fight once it does.
+Every fight between players is under Battle (`webapp/app/battle`): one on one, guild war and the cup. The Squad page only
+sets the team up.
+
+Squad (demo only so far): six cards, one per power type, each ranked E to S. A new player's favourite character joins at
+once and they pick the other five from random choices. Engine and balance numbers are in `webapp/lib/squad.js`, player
+actions in `webapp/lib/squad-rules.js`, which also holds guild wars (battle party against battle party) and the weekly cup
+(a knockout between tournament parties with a rank limit). Cup winners wear a champion badge.
+
+Cards: a player can own any number. Under Squad are four tabs: Squad, My Cards (upgrade, traits, swap, lock, use up a
+spare), Market (six a day) and Rewards (daily and weekly). Season points are also coins, so lineup scores and ranked wins
+pay for the market. It has no database tables yet, and the server must decide every fight, reward and purchase once it does.
 
 ## Setup
 

@@ -6,12 +6,12 @@ import { isDemo, runDemoBattle } from '../lib/demo'
 import Icon from './Icon'
 import { Wordmark } from './Logo'
 import ThemeToggle from './ThemeToggle'
-import { isFantasy } from './FantasyTabs'
+import { isFantasy, isSquad } from './FantasyTabs'
 
 const noop = () => () => {}
 
 export default function BottomNav({ active: page }) {
-  const active = isFantasy(page) ? 'fantasy' : page
+  const active = isFantasy(page) ? 'fantasy' : isSquad(page) ? 'squad' : page
   const [showMore, setShowMore] = useState(false)
   const router = useRouter()
   const demo = useSyncExternalStore(noop, isDemo, () => false)
@@ -33,6 +33,7 @@ export default function BottomNav({ active: page }) {
       </svg>
     )},
     { id: 'squad', label: 'Squad', path: '/squad', icon: () => <Icon name="flame" size={24} /> },
+    { id: 'battle', label: 'Battle', path: '/battle', icon: () => <Icon name="swords" size={24} /> },
     { id: 'guild', label: 'Guild', path: '/guild', icon: () => <Icon name="shield" size={24} /> },
     { id: 'fantasy', label: 'Fantasy', path: '/lineup', icon: () => <Icon name="medal" size={24} /> },
     { id: 'more', label: 'More', path: null, icon: () => (
@@ -113,7 +114,7 @@ export default function BottomNav({ active: page }) {
       )}
 
       {demo && (
-        <p className="label md:hidden fixed top-3 right-3 z-50 bg-[var(--spot)] text-white px-3 py-1.5 !text-[0.6875rem] pointer-events-none">Demo</p>
+        <p className="demo-flag label md:hidden fixed top-3 right-3 z-50 bg-[var(--spot)] text-white px-3 py-1.5 !text-[0.6875rem] pointer-events-none">Demo</p>
       )}
       <nav className="mn mn-bar md:hidden fixed bottom-0 left-0 right-0 z-50" aria-label="Main">
         <div className="flex items-stretch pb-safe">

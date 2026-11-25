@@ -46,15 +46,27 @@ export const POWER_BADGES = {
   Mythic: 'bg-pink-500/20 text-pink-400',
 }
 
-// season points needed, lowest first
+// season points needed, lowest first. pipeline/battle.py holds the same floors.
 export const RANKS = [
   { name: 'Rookie', min: 0, color: 'text-zinc-500', bg: 'border-zinc-700/30 bg-zinc-900/50' },
-  { name: 'Ronin', min: 40, color: 'text-zinc-400', bg: 'border-zinc-600/30 bg-zinc-800/30' },
-  { name: 'Veteran', min: 110, color: 'text-blue-400', bg: 'border-blue-500/30 bg-blue-500/5' },
-  { name: 'Warlord', min: 220, color: 'text-red-400', bg: 'border-red-500/30 bg-red-500/5' },
-  { name: 'Sovereign', min: 350, color: 'text-purple-400', bg: 'border-purple-500/30 bg-purple-500/5' },
-  { name: 'Legendary', min: 500, color: 'text-yellow-400', bg: 'border-yellow-500/30 bg-yellow-500/5' },
+  { name: 'Ronin', min: 100, color: 'text-zinc-400', bg: 'border-zinc-600/30 bg-zinc-800/30' },
+  { name: 'Adept', min: 250, color: 'text-green-400', bg: 'border-green-500/30 bg-green-500/5' },
+  { name: 'Veteran', min: 500, color: 'text-blue-400', bg: 'border-blue-500/30 bg-blue-500/5' },
+  { name: 'Vanguard', min: 850, color: 'text-cyan-400', bg: 'border-cyan-500/30 bg-cyan-500/5' },
+  { name: 'Warlord', min: 1300, color: 'text-red-400', bg: 'border-red-500/30 bg-red-500/5' },
+  { name: 'Conqueror', min: 1900, color: 'text-orange-400', bg: 'border-orange-500/30 bg-orange-500/5' },
+  { name: 'Sovereign', min: 2700, color: 'text-purple-400', bg: 'border-purple-500/30 bg-purple-500/5' },
+  { name: 'Immortal', min: 3800, color: 'text-pink-400', bg: 'border-pink-500/30 bg-pink-500/5' },
+  { name: 'Legendary', min: 5500, color: 'text-yellow-400', bg: 'border-yellow-500/30 bg-yellow-500/5' },
 ]
+export const rankFor = (points) => RANKS.findLast(r => Number(points || 0) >= r.min).name
+// points change a player's rank; reaching the top once keeps the legend badge
+export function addPoints(row, points) {
+  row.season_points = Number(row.season_points || 0) + points
+  row.all_time_points = Number(row.all_time_points || 0) + points
+  row.current_rank = rankFor(row.season_points)
+  row.is_legend = row.is_legend || row.current_rank === 'Legendary'
+}
 
 export const rankInfo = (name) => RANKS.find(r => r.name === name) || RANKS[0]
 

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import FaceWall from '../components/FaceWall'
 import { Wordmark } from '../components/Logo'
-import { Sk } from '../components/Skeleton'
+import Splash from '../components/Splash'
 import { startDemo } from '../lib/demo'
 import ThemeToggle from '../components/ThemeToggle'
 
@@ -65,18 +65,10 @@ export default function LandingPage() {
 
     // the database trigger creates the profile and rank rows; it rejects a taken or invalid username
     if (error) { setError(isOffline(error) ? OFFLINE : /database error/i.test(error.message) ? 'Username already taken' : error.message); setLoading(false); return }
-    if (data.user) router.push('/dashboard')
+    if (data.user) router.push('/squad') // a new player answers the starting questions first
   }
 
-  if (checking) return (
-    <div className="skeleton-wrap mg h-dvh overflow-hidden flex flex-col items-center justify-center px-6" role="status" aria-label="Loading">
-      <Sk className="h-12 w-56 mb-4" />
-      <Sk className="h-4 w-40 mb-10" />
-      <Sk className="h-12 w-full max-w-sm mb-3" />
-      <Sk className="h-12 w-full max-w-sm mb-3" />
-      <Sk className="h-12 w-full max-w-sm" />
-    </div>
-  )
+  if (checking) return <Splash hold />
 
   return (
     <main className="mg login relative h-dvh overflow-hidden">

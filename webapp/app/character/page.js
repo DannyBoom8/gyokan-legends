@@ -42,7 +42,7 @@ function CharacterProfile() {
     load()
   }, [id])
 
-  if (loading) return <PageSkeleton variant="detail" />
+  if (loading) return <PageSkeleton variant="detail" nav="characters" />
 
   if (!char) return (
     <Screen nav="characters">

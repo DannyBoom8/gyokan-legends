@@ -189,7 +189,7 @@ function CharactersContent() {
 
 export default function Characters() {
   return (
-    <Suspense fallback={<PageSkeleton variant="list" />}>
+    <Suspense fallback={<PageSkeleton nav="characters" title="Characters" />}>
       <CharactersContent />
     </Suspense>
   )

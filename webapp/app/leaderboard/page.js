@@ -30,7 +30,7 @@ export default function Leaderboard() {
 
   useEffect(() => { fetchAvatars().then(setAvatars); load() }, [])
 
-  if (!data) return <PageSkeleton variant="list" />
+  if (!data) return <PageSkeleton nav="leaderboard" title="Leaderboard" width="max-w-3xl" />
 
   const { me, country } = data
   const sub = { players: 'Season points · top 100 players', guilds: 'Guild points: every member’s season points', mine: me.guild_name || 'Your guild' }[tab]

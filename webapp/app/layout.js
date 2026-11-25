@@ -1,6 +1,7 @@
 import { Geist, Chakra_Petch, Anton } from "next/font/google";
 import "./globals.css";
 import "./manga.css";
+import Splash from "../components/Splash";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const display = Chakra_Petch({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-display-face" });
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
       <body className={`${geist.className} ${geist.variable} ${display.variable} ${poster.variable} antialiased bg-black`}>
+        <Splash />
         {children}
       </body>
     </html>

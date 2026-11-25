@@ -33,7 +33,7 @@ function Countdown({ target }) {
   )
 }
 
-// where the player stands with guild, battle party, one-on-one fights and nakama
+// where the player stands with guild, battle party, squad battles and nakama
 async function fetchSocial() {
   const me = await fetchMe()
   const week = weekOf()
@@ -124,7 +124,7 @@ export default function Dashboard() {
     load()
   }, [])
 
-  if (loading || !social || !squad) return <PageSkeleton variant="dashboard" />
+  if (loading || !social || !squad) return <PageSkeleton variant="dashboard" nav="dashboard" />
 
   const rank = rankInfo(rankData?.current_rank)
   const tier = RANKS.indexOf(rank)
@@ -152,8 +152,9 @@ export default function Dashboard() {
   const inGuild = !!me.guild_id
   const lineupProblem = partyCount < 10 ? `${partyCount}/10` : !hasMedic ? 'No Medic' : goldLeft < 0 ? 'Over budget' : ''
   const picked = squad.line.length > 0
+  const growing = squad.trait || squad.unspent || squad.ready // something to do on the Squad page
   const missions = [
-    { label: 'Train your squad', value: !picked ? 'Not picked' : squad.unspent ? `${squad.unspent} points to spend` : squad.left ? `${squad.left} battles left` : 'Done today', done: picked && squad.fought && !squad.unspent, path: '/squad' },
+    { label: 'Train your squad', value: !picked ? 'Not picked' : squad.trait ? 'Choose a trait' : squad.unspent ? `${squad.unspent} points to spend` : squad.ready ? 'Upgrade ready' : squad.reward ? 'Reward ready' : squad.left ? `${squad.left} battles left` : 'Done today', done: picked && squad.fought && !growing && !squad.reward, path: !picked || growing ? '/squad' : squad.reward ? '/rewards' : '/battle' },
     { label: 'Ready your lineup', value: lineupProblem || '10/10', done: !lineupProblem, path: '/lineup' },
     { label: 'Join a guild', value: inGuild ? me.guild_tag : 'Not yet', done: inGuild, path: '/guild' },
     { label: 'Join a party', value: party ? party.name : 'Not yet', done: !!party, path: '/guild?tab=parties' },
@@ -162,8 +163,8 @@ export default function Dashboard() {
 
   const standings = [
     { label: 'Your guild', value: inGuild ? me.guild_name : 'None yet', hint: inGuild ? `#${guildRank || '—'} in ${COUNTRIES[me.country_code]} · you are #${guildPlace} of ${members}` : `Join one in ${COUNTRIES[me.country_code] || 'your country'}`, path: '/guild' },
-    { label: 'Battle party', value: party ? party.name : inGuild ? 'None yet' : 'Locked', hint: party ? `${party.size}/${PARTY_MAX} · go to war` : inGuild ? 'Team up for guild wars' : 'Needs a guild', path: party ? '/guild?tab=war' : inGuild ? '/guild?tab=parties' : '/guild' },
-    { label: 'Fight record', value: record(me), hint: weekFights ? `${weekFights} ranked this week` : 'Challenge someone', path: '/battles' },
+    { label: 'Battle party', value: party ? party.name : inGuild ? 'None yet' : 'Locked', hint: party ? `${party.size}/${PARTY_MAX} · go to war` : inGuild ? 'Team up for guild wars' : 'Needs a guild', path: party ? '/battle?tab=war' : inGuild ? '/guild?tab=parties' : '/guild' },
+    { label: 'Battle record', value: record(me), hint: weekFights ? `${weekFights} fought this week` : 'Challenge someone', path: '/battle' },
     { label: 'Nakama', value: nakama, hint: nakama ? 'Spar or fight them' : 'Add your first', path: '/nakama' },
   ]
 
@@ -279,7 +280,7 @@ export default function Dashboard() {
           <Panel i={6} className="hov md:order-5 md:col-span-2 lg:!hidden">
             <Caption>Power levels</Caption>
             <div className="pad p-4">
-              <ol aria-label="Power levels" className="grid grid-cols-3 gap-[3px] bg-[var(--line)] border-[3px] border-[var(--line)]">
+              <ol aria-label="Power levels" className="grid grid-cols-2 sm:grid-cols-5 gap-[3px] bg-[var(--line)] border-[3px] border-[var(--line)]">
                 {RANKS.map((r, n) => (
                   <li key={r.name} aria-current={n === tier ? 'step' : undefined}
                     className={`hov-card relative isolate px-3 py-3 ${n === tier ? 'bg-[var(--spot)] text-white' : 'bg-[var(--panel)]'}`}>

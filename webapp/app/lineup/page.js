@@ -182,7 +182,7 @@ export default function Lineup() {
     </div>
   )
 
-  if (loading) return <PageSkeleton variant="cards" />
+  if (loading) return <PageSkeleton variant="cards" nav="lineup" title="My Lineup" />
 
   const over = goldRemaining < 0
 

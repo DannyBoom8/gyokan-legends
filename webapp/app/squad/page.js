@@ -1,228 +1,166 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '../../lib/supabase'
-import { isDemo } from '../../lib/demo'
-import { fetchMe, byPoints } from '../../lib/social'
-import { DAILY_FIGHTS, EXTRA_PER_WEEK, MAX_LEVEL, PRICES, SQUAD_SIZE, TACTICS, creditsOf, fightsLeft, squadLevel, xpToNext } from '../../lib/squad'
+import { POWER_HEX } from '../../lib/game'
+import { CARD_RANKS, DAILY_FIGHTS, EXTRA_PER_WEEK, PRICES, RANK_PERKS, RANK_START, TACTICS, cardNote, fightsLeft, squadRank } from '../../lib/squad'
+import useCards from '../../components/useCards'
 import { weekOf } from '../../lib/guild-rules'
 import PageSkeleton from '../../components/Skeleton'
-import { Screen, PageHead, Panel, Caption } from '../../components/Manga'
+import { Screen, PageHead } from '../../components/Manga'
 import { Empty } from '../../components/Players'
-import FighterPicker from '../../components/FighterPicker'
+import Icon from '../../components/Icon'
+import RankTag, { rankLetter } from '../../components/RankTag'
+import StartCards from '../../components/StartCards'
 import FighterSheet from '../../components/FighterSheet'
-import Arena from '../../components/Arena'
 
-const STEPS = [['Pick', 'Three favourites'], ['Battle', 'Earn XP'], ['Level up', 'Get 3 points'], ['Train', 'Place them your way']]
+// the formation, in fight order: one in front, then two, then three
+const ROWS = [['First', [1]], ['Next', [2, 3]], ['Last', [4, 5, 6]]]
+
+// what reaching each card rank brings
+const PERKS = [null, 'A trait you choose', RANK_PERKS.quick.name, 'A second trait', RANK_PERKS.burst.name, RANK_PERKS.awaken.name]
+
+// the settings, kept off the formation so all six cards stay on one screen
+function Options({ data, busy, error, act, onClose }) {
+  const ref = useRef(null)
+  const router = useRouter()
+  useEffect(() => { if (!ref.current.open) ref.current.showModal() }, [])
+  const { tactic, coins, extras, rank } = data
+
+  return (
+    <dialog ref={ref} onClose={onClose} onClick={e => e.target === ref.current && onClose()} aria-label="Squad options" className="picker">
+      <div className="flex items-center justify-between gap-3 p-3 border-b-[3px] border-current">
+        <h2 className="poster text-2xl">Squad rank {CARD_RANKS[rank]}</h2>
+        <button onClick={onClose} className="label border-2 border-current px-3 py-2">Close</button>
+      </div>
+      <div className="relative overflow-y-auto p-3 flex flex-col gap-4">
+        {error && <p role="alert" className="text-sm font-semibold" style={{ color: 'var(--spot-text)' }}>{error}</p>}
+        <section>
+          <h3 className="poster text-xl mb-2">Tactic</h3>
+          <div role="group" aria-label="Tactic" className="grid grid-cols-3 gap-2">
+            {TACTICS.map(t => (
+              <button key={t.id} disabled={busy} aria-pressed={tactic === t.id} onClick={() => act('squad_tactic', { p_tactic: t.id })} className="btn text-lg py-2.5">{t.name}</button>
+            ))}
+          </div>
+          <p className="muted text-sm mt-2">{TACTICS.find(t => t.id === tactic)?.hint} Rivals don&apos;t see it until the fight.</p>
+        </section>
+        <section>
+          <h3 className="poster text-xl mb-2">Coins: {coins}</h3>
+          <p className="muted text-sm mb-2">Your <button onClick={() => router.push('/lineup')} className="underline font-semibold text-[var(--ink)]">lineup</button> earns one for every point on battle night, and rewards add more. They also buy cards in the <button onClick={() => router.push('/market')} className="underline font-semibold text-[var(--ink)]">market</button>.</p>
+          <button onClick={() => act('squad_buy_battle', {})} disabled={busy || extras < 1 || coins < PRICES.extra} className="btn text-base py-3 w-full">
+            +1 ranked battle today · {PRICES.extra} coins
+          </button>
+          <p className="label muted !whitespace-normal mt-1.5">{extras} of {EXTRA_PER_WEEK} left this week</p>
+        </section>
+        <section>
+          <h3 className="poster text-xl mb-2">How cards rank up</h3>
+          <p className="muted text-sm mb-2">Win a ranked battle to earn an upgrade point, once per rival each day, with {DAILY_FIGHTS} free ranked battles a day. Spend points on any card, or use up spare cards. Each upgrade gives it 3 stat points, and enough upgrades raise its rank.</p>
+          <ol aria-label="Card ranks" className="flex flex-col gap-1.5">
+            {RANK_START.map((upgrades, rank) => (
+              <li key={upgrades} className="flex items-center gap-3">
+                <RankTag upgrades={upgrades} className="text-lg w-8 text-center" />
+                <span className="text-sm">{PERKS[rank] || 'Where cards start'}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
+    </dialog>
+  )
+}
 
 export default function Squad() {
-  const [data, setData] = useState(null)
-  const [picked, setPicked] = useState([])
-  const [open, setOpen] = useState(null)
-  const [battle, setBattle] = useState(null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const { data, busy, error, setError, act } = useCards()
+  const [open, setOpen] = useState(null) // a card_id, or 'options'
   const router = useRouter()
 
-  const load = async () => {
-    const me = await fetchMe()
-    if (!me) { router.push('/'); return }
-    const [{ data: squad, error: failed }, { data: fighters }, { data: players }, { data: ranks }] = await Promise.all([
-      supabase.from('squads').select('*').eq('user_id', me.user_id).maybeSingle(),
-      supabase.from('fighters').select('*').in('slot', [1, 2, 3]),
-      byPoints(),
-      supabase.from('user_ranks').select('all_time_points').eq('user_id', me.user_id).maybeSingle(),
-    ])
-    const ids = (fighters || []).map(f => f.character_id)
-    const { data: chars } = ids.length
-      ? await supabase.from('characters').select('character_id, name, image_url, power_type').in('character_id', ids)
-      : { data: [] }
-    const lineOf = (id) => (fighters || []).filter(f => f.user_id === id).sort((a, b) => a.slot - b.slot)
-    // copies, so a change made by a database function always redraws
-    const mine = lineOf(me.user_id).map(f => ({ ...f }))
-    const level = squadLevel(mine)
-    const rivals = (players || []).filter(p => p.user_id !== me.user_id)
-      .map(p => ({ ...p, line: lineOf(p.user_id) })).filter(p => p.line.length === SQUAD_SIZE)
-      .map(p => ({ ...p, level: squadLevel(p.line) }))
-      .sort((a, b) => Math.abs(a.level - level) - Math.abs(b.level - level))
-    const today = new Date().toISOString().slice(0, 10)
-    setData({
-      failed: !!failed, tactic: squad?.tactic, mine, level, rivals,
-      left: fightsLeft(squad, today),
-      credits: creditsOf(ranks?.all_time_points, squad),
-      extras: EXTRA_PER_WEEK - (squad?.week === weekOf() ? squad.extras : 0),
-      fought: squad?.day === today && squad.fights > 0,
-      chars: Object.fromEntries((chars || []).map(c => [c.character_id, c])),
-    })
-  }
+  if (!data) return <PageSkeleton variant="cards" nav="squad" title="My Squad" />
 
-  useEffect(() => { load() }, [])
-
-  const act = async (name, args, done) => {
-    setBusy(true); setError('')
-    const { error } = await supabase.rpc(name, args)
-    if (error) setError(error.message)
-    else done?.()
-    await load()
-    setBusy(false)
-  }
-
-  const fight = async (rival, ranked) => {
-    setBusy(true); setError('')
-    const { data: result, error } = await supabase.rpc('squad_battle', { p_opponent: rival.user_id, p_ranked: ranked })
-    if (error) { setBusy(false); return setError(error.message) }
-    const ids = [...result.a.fighters, ...result.b.fighters].map(f => f.character_id)
-    const { data: chars } = await supabase.from('characters').select('character_id, name, image_url, power_type').in('character_id', ids)
-    setBattle({ result, rival: rival.username, chars: Object.fromEntries(chars.map(c => [c.character_id, c])) })
-    setBusy(false)
-  }
-
-  if (!data) return <PageSkeleton variant="list" />
-
-  const { mine, chars, rivals, left, level, credits, extras } = data
-  const alert = error && <p role="alert" className="box text-sm font-semibold px-4 py-3 mb-3" style={{ color: 'var(--spot-text)' }}>{error}</p>
+  const { cards, chars, squad, coins } = data
+  const mine = cards.filter(c => c.slot).sort((a, b) => a.slot - b.slot)
+  const pool = squad?.pool || 0, tactic = squad?.tactic
+  const left = fightsLeft(squad, new Date().toISOString().slice(0, 10))
+  const close = () => { setError(''); setOpen(null) }
+  const alert = error && !open && <p role="alert" className="box text-sm font-semibold px-4 py-3 mb-2" style={{ color: 'var(--spot-text)' }}>{error}</p>
 
   if (data.failed) return (
-    <Screen nav="squad" width="max-w-5xl">
+    <Screen nav="squad">
       <PageHead title="My Squad" />
       <Empty>Squads can only be tried in the demo for now.</Empty>
     </Screen>
   )
 
-  const steps = (
-    <ol aria-label="How it works" className="grid grid-cols-2 min-[360px]:grid-cols-4 gap-[3px] bg-[var(--line)] border-[3px] border-[var(--line)] mb-3">
-      {STEPS.map(([title, text], i) => (
-        <li key={title} className="bg-[var(--panel)] px-2 sm:px-3 py-2 min-w-0">
-          <p className="poster text-base sm:text-xl"><span style={{ color: 'var(--spot-text)' }}>{i + 1}</span> {title}</p>
-          <p className="muted text-[0.6875rem] sm:text-xs leading-snug mt-1">{text}</p>
-        </li>
-      ))}
-    </ol>
+  if (!mine.length) return (
+    <Screen nav="squad" width="max-w-3xl">
+      <PageHead title="My Squad" sub="Everyone starts equally strong. You decide how they grow." />
+      <StartCards busy={busy} error={error} onStart={(args) => act('squad_create', args, () => window.scrollTo(0, 0))} />
+    </Screen>
   )
 
-  if (!mine.length) {
-    const toggle = (c) => setPicked(list => list.some(p => p.character_id === c.character_id)
-      ? list.filter(p => p.character_id !== c.character_id)
-      : list.length < SQUAD_SIZE ? [...list, c] : list)
+  // one card, laid out like a Fantasy lineup place, with the rank where the overall sits
+  const token = (slot) => {
+    const card = mine.find(c => c.slot === slot)
+    const c = chars[card?.character_id]
+    if (!card) return null
+    const note = cardNote(card, pool)
     return (
-      <Screen nav="squad" width="max-w-5xl">
-        <PageHead title="My Squad" sub="Everyone starts equally strong. You decide how they grow." />
-        {steps}
-        {alert}
-        <FighterPicker picked={picked.map(p => p.character_id)} onPick={toggle} />
-        <div className="box sticky bottom-[5rem] md:bottom-3 z-10 flex items-center gap-3 p-3 mt-3">
-          <p className="flex-1 min-w-0 text-sm font-semibold" role="status">
-            {picked.length ? picked.map(p => p.name).join(', ') : 'Tap three characters. The first one fights first.'}
-          </p>
-          <button onClick={() => act('squad_create', { p_characters: picked.map(p => p.character_id) }, () => window.scrollTo(0, 0))}
-            disabled={busy || picked.length < SQUAD_SIZE} className="btn-spot text-lg px-4 py-3 flex-shrink-0">
-            {picked.length < SQUAD_SIZE ? `${picked.length} / ${SQUAD_SIZE}` : 'Start'}
-          </button>
-        </div>
-      </Screen>
+      <div key={card.card_id} className="relative flex flex-col justify-center min-h-0 w-[min(28%,10.5rem)]">
+        <button onClick={() => { setError(''); setOpen(card.card_id) }}
+          aria-label={`${c?.name}, rank ${rankLetter(card.upgrades)} ${c?.power_type}, fights number ${slot}${note ? `, ${note[1]}` : ''}`}
+          className="art hov-thumb press w-full h-full max-h-[14rem] flex flex-col gap-1">
+          <span className="relative block w-full flex-1 min-h-0">
+            <span data-rank={rankLetter(card.upgrades)} className="rank-frame absolute top-0 h-full left-1/2 -translate-x-1/2 aspect-square md:aspect-[4/5] max-w-full bg-[var(--panel)]">
+              <span className="absolute inset-0 overflow-hidden">
+                <img src={c?.image_url} alt="" className="w-full h-full object-cover object-top" />
+              </span>
+              <span className="absolute inset-x-0 top-0 h-1.5" style={{ background: POWER_HEX[c?.power_type] }} />
+              <span className="tag poster text-xs left-0 top-1.5">{slot}</span>
+              {note && <span className="label !text-[0.5625rem] absolute right-0 top-1.5 bg-[var(--spot)] !text-[#fff] px-1 py-0.5">{note[0]}</span>}
+              <RankTag upgrades={card.upgrades} className="absolute right-0 bottom-0 text-lg sm:text-2xl" />
+            </span>
+          </span>
+          <span className="poster text-xs sm:text-sm block w-full text-center truncate">{c?.name}</span>
+        </button>
+      </div>
     )
   }
 
-  const tactic = TACTICS.find(t => t.id === data.tactic)
-  const selected = mine.find(f => f.character_id === open)
+  const selected = mine.find(c => c.card_id === open)
 
   return (
-    <Screen nav="squad" width="max-w-5xl">
-      <PageHead title="My Squad" sub={`Level ${level} · ${left} XP ${left === 1 ? 'battle' : 'battles'} left today`}
-        aside={isDemo() && data.fought && (
-          <button disabled={busy} onClick={() => act('squad_new_day', {})} className="btn text-sm px-3 py-2">New day (demo)</button>
-        )} />
-      {steps}
+    <Screen nav="squad" fit="always">
+      <PageHead compact title="My Squad" aside={
+        <div className="flex items-center gap-1.5">
+          <p className="label border-2 border-[var(--line)] px-2 py-2">{pool} <span className="max-sm:sr-only">upgrade </span>{pool === 1 ? 'point' : 'points'}</p>
+          <button onClick={() => { setError(''); setOpen('options') }} className="btn text-sm px-3 py-2">
+            {TACTICS.find(t => t.id === tactic)?.name}<span className="sr-only"> tactic, squad options</span>
+          </button>
+        </div>
+      } />
       {alert}
 
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
-        <div className="flex flex-col gap-3">
-          <ul className="grid grid-cols-3 gap-2">
-            {mine.map(f => {
-              const c = chars[f.character_id]
-              const need = xpToNext(f.level)
-              return (
-                <li key={f.character_id} className="min-w-0">
-                  <button onClick={() => { setError(''); setOpen(f.character_id) }} className="hov-card box w-full h-full text-left flex flex-col relative">
-                    <span className="art relative block overflow-hidden">
-                      <img src={c?.image_url} alt="" className="block w-full aspect-[3/4] object-cover object-top" />
-                      <span className="tag poster left-0 top-0 text-base">{['1st', '2nd', '3rd'][f.slot - 1]}</span>
-                      <span className="tag poster right-0 bottom-0 text-xl">Lv {f.level}</span>
-                    </span>
-                    <span className="block p-2 flex-1">
-                      <span className="poster text-base sm:text-xl line-clamp-2 break-words">{c?.name}</span>
-                      <span className="block h-2 mt-1.5 bg-[color-mix(in_oklab,var(--ink)_15%,transparent)]" aria-hidden="true">
-                        <span className="block h-full bg-[var(--spot)]" style={{ width: `${f.level < MAX_LEVEL ? f.xp / need * 100 : 100}%` }} />
-                      </span>
-                      <span className="label muted block !text-[0.5625rem] mt-1">{f.level < MAX_LEVEL ? `${f.xp} / ${need} XP` : 'Top level'}</span>
-                    </span>
-                    <span className={`poster block text-center text-sm sm:text-base py-2 ${f.points ? 'bg-[var(--spot)] text-white' : 'muted border-t-2 border-current/25'}`}>
-                      {f.points ? `Spend ${f.points}` : 'Stats'}
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-
-          <Panel i={1} pageClass="flex flex-col">
-            <Caption>Tactic</Caption>
-            <div className="p-3">
-              <div role="group" aria-label="Tactic" className="grid grid-cols-3 gap-2">
-                {TACTICS.map(t => (
-                  <button key={t.id} disabled={busy} aria-pressed={data.tactic === t.id} onClick={() => act('squad_tactic', { p_tactic: t.id })} className="btn text-lg py-2.5">{t.name}</button>
-                ))}
-              </div>
-              <p className="muted text-sm mt-2">{tactic?.hint} Rivals don&apos;t see it until the fight.</p>
-            </div>
-          </Panel>
-
-          <Panel i={2} pageClass="flex flex-col">
-            <Caption aside={`${DAILY_FIGHTS} free battles a day`}>Credits</Caption>
-            <div className="p-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3">
-              <p className="poster text-5xl">{credits}<span className="sr-only"> credits</span></p>
-              <p className="muted text-sm">Your <button onClick={() => router.push('/lineup')} className="underline font-semibold text-[var(--ink)]">lineup</button> earns one for every point on battle night. They can&apos;t buy stats or levels.</p>
-              <button onClick={() => act('squad_buy_battle', {})} disabled={busy || extras < 1 || credits < PRICES.extra} className="btn text-base py-3 col-span-2">
-                +1 XP battle today · {PRICES.extra} credits
-              </button>
-              <p className="label muted !whitespace-normal col-span-2">{extras} of {EXTRA_PER_WEEK} left this week · reset a fighter&apos;s points from their card for {PRICES.reset}</p>
-            </div>
-          </Panel>
-        </div>
-
-        <Panel i={3} pageClass="flex flex-col">
-          <Caption aside="Closest level first">Opponents</Caption>
-          <ul className="divide-y-[3px] divide-[var(--line)] border-t-[3px] border-[var(--line)] mt-2">
-            {rivals.map(p => (
-              <li key={p.user_id} className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3">
-                <div className="flex-1 min-w-[8rem]">
-                  <p className="poster text-xl break-words">{p.username}</p>
-                  <p className="label muted mt-1">Lv {p.level}{p.guild_tag ? ` · ${p.guild_tag}` : ''}</p>
-                </div>
-                <ul className="flex gap-1">
-                  {p.line.map(f => (
-                    <li key={f.character_id}><img src={chars[f.character_id]?.image_url} alt={chars[f.character_id]?.name} title={chars[f.character_id]?.name} loading="lazy" className="w-9 h-11 object-cover object-top border-2 border-[var(--line)]" /></li>
-                  ))}
-                </ul>
-                <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
-                  <button onClick={() => fight(p, false)} disabled={busy} aria-label={`Spar with ${p.username}`} className="btn text-base px-3 py-2.5">Spar</button>
-                  <button onClick={() => fight(p, true)} disabled={busy || left < 1} aria-label={`Battle ${p.username} for XP`} className="btn-spot text-base px-3 py-2.5">Battle</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {!rivals.length && <p className="muted text-sm p-4">No other squads yet.</p>}
-        </Panel>
+      {/* not a Panel: a clipped parent would cut off the lifted cards */}
+      <div className="box arrive relative flex-1 min-h-0 grid grid-rows-3 gap-1.5 p-2" style={{ '--i': 1 }}>
+        <div className="tone absolute inset-0" aria-hidden="true" />
+        {ROWS.map(([label, slots]) => (
+          <div key={label} className="relative flex justify-center items-stretch gap-2 sm:gap-5 min-h-0">
+            <p className="label muted !text-[0.5625rem] absolute left-0 inset-y-0 w-3 flex items-center justify-center rotate-180 [writing-mode:vertical-rl]">{label}</p>
+            {slots.map(token)}
+          </div>
+        ))}
       </div>
 
+      <button onClick={() => router.push('/battle')} className="btn-spot poster text-xl w-full py-2.5 mt-2 flex flex-shrink-0 items-center justify-center gap-2">
+        <Icon name="swords" size={20} /> Go to battle · {left} ranked left
+      </button>
+
       {selected && (
-        <FighterSheet key={selected.character_id} fighter={selected} credits={credits} character={chars[selected.character_id]} taken={mine.map(f => f.character_id)}
-          error={error} busy={busy} act={act} onClose={() => { setError(''); setOpen(null) }} />
+        <FighterSheet key={selected.card_id} card={selected} cards={cards} chars={chars} pool={pool} coins={coins}
+          error={error} busy={busy} act={act} onClose={close} />
       )}
-      {battle && (
-        <Arena {...battle} onClose={() => { setBattle(null); load() }}
-          onSpend={async (id) => { await load(); setBattle(null); setError(''); setOpen(id) }} />
-      )}
+      {open === 'options' && <Options data={{
+        tactic, coins, rank: squadRank(mine),
+        extras: EXTRA_PER_WEEK - (squad.week === weekOf() ? squad.extras : 0),
+      }} busy={busy} error={error} act={act} onClose={close} />}
     </Screen>
   )
 }

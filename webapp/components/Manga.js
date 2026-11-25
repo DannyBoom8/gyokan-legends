@@ -1,7 +1,8 @@
 'use client'
 import { createContext, useContext } from 'react'
 import { useRouter } from 'next/navigation'
-import FantasyTabs, { isFantasy } from './FantasyTabs'
+import SectionTabs, { isFantasy, isSquad } from './FantasyTabs'
+import SquadTabs from './SquadTabs'
 import BottomNav from './BottomNav'
 import Icon from './Icon'
 import { Wordmark } from './Logo'
@@ -34,14 +35,18 @@ export function PageHead({ title, sub, aside, back, backLabel = 'Back', compact 
           <Icon name="back" size={16} /> {backLabel}
         </button>
       )}
-      <div className={`flex flex-wrap items-end justify-between gap-x-3 gap-y-2 md:border-b-4 md:border-[var(--line)] ${compact ? 'md:pb-2' : 'md:pb-3'}`}>
+      <div className={`flex flex-wrap items-end justify-between gap-x-3 gap-y-2 md:border-b-4 md:border-[var(--line)] ${compact ? 'head-compact md:pb-2' : 'md:pb-3'}`}>
         <div className="min-w-0">
           <h1 className={`poster ${compact ? 'text-3xl' : 'text-4xl md:text-5xl'}`}>{title}</h1>
           {sub && <p className="muted text-sm mt-2">{sub}</p>}
         </div>
         {aside}
       </div>
-      {isFantasy(nav) && <div className={compact ? 'mt-2 -mb-2' : 'mt-3 -mb-3'}><FantasyTabs active={nav} compact={compact} /></div>}
+      {(isFantasy(nav) || isSquad(nav)) && (
+        <div className={compact ? 'mt-2 -mb-2' : 'mt-3'}>
+          {isSquad(nav) ? <SquadTabs active={nav} compact={compact} /> : <SectionTabs active={nav} compact={compact} />}
+        </div>
+      )}
     </header>
   )
 }

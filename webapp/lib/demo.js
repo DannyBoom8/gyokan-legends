@@ -1,14 +1,14 @@
 // Demo mode: a stand-in for the Supabase client that keeps a small game world in this browser.
 // It answers the same query calls the pages make, so every page works without the backend.
 // Fight and scoring rules mirror pipeline/battle.py; keep them in sync.
-import { BUDGET, SLOT_DEFS, DRAW_POINTS, MEDIC_BOOST } from './game.js'
+import { BUDGET, SLOT_DEFS, DRAW_POINTS, MEDIC_BOOST, addPoints } from './game.js'
 import { RPC, fight, leaderboardRows, guildRows } from './guild-rules.js'
 import { SQUAD_RPC, seedSquads } from './squad-rules.js'
+import { inReach } from './squad.js'
 
 const FLAG = 'gyokan-demo'
-const STORE = 'gyokan-demo-db-v6' // bump when the demo tables change
+const STORE = 'gyokan-demo-db-v9' // bump when the demo tables change
 const ME = 'demo-player'
-const RANKS = [[500, 'Legendary'], [350, 'Sovereign'], [220, 'Warlord'], [110, 'Veteran'], [40, 'Ronin'], [0, 'Rookie']]
 const SLOT_POINTS = Object.fromEntries(SLOT_DEFS.map(d => [d.type, d.points]))
 const BOTS = ['TitanSlayer', 'MangaMage', 'NarutoFan', 'SoloLevelUp', 'HunterX', 'NewbieSan', 'CursedQueen', 'OnePieceGuy', 'ShinobiKai', 'AuraFarmer', 'PlusUltra']
 const PK = { characters: 'character_id', users: 'id', user_ranks: 'user_id', parties: 'id', party_slots: 'id', gameweeks: 'gameweek_id', fixtures: 'fixture_id', results: 'result_id', fantasy_points: 'points_id', seasons: 'season_id' }
@@ -18,7 +18,7 @@ const GUILDS = [['Lagos Shinobi', 'LSN', [0, 1, 2, 4]], ['Abuja Titans', 'ABJ', 
 
 const storage = () => { try { return window.localStorage } catch { return null } }
 export const isDemo = () => typeof window !== 'undefined' && storage()?.getItem(FLAG) === '1'
-export const startDemo = () => { storage()?.setItem(FLAG, '1'); window.location.href = '/dashboard' }
+export const startDemo = () => { storage()?.setItem(FLAG, '1'); window.location.href = '/squad' }
 export const exitDemo = () => { const s = storage(); s?.removeItem(FLAG); s?.removeItem(STORE); window.location.href = '/' }
 
 // small seeded RNG so a fresh demo always looks the same
@@ -54,12 +54,19 @@ function seed(chars) {
     for (const s of randomParty(db.characters, r)) insertRow(db, 'party_slots', { ...s, party_id: party.id, gameweek: null })
   }
   for (let w = 0; w < 3; w++) battleNight(db, r)
-  seedSocial(db, r)
-  seedSquads(db, BOTS.map((_, i) => `bot-${i}`)) // the demo player picks their own
+  // the bots have been at it longer, so they sit all the way up the ladder
+  BOTS.forEach((_, i) => addPoints(db.user_ranks.find(x => x.user_id === `bot-${i}`), i * i * 30))
+  seedSocial(db)
+  const bots = BOTS.map((_, i) => `bot-${i}`)
+  seedSquads(db, bots) // the demo player picks their own
+  // some older fights between the bots, so records aren't all zero
+  const line = (id) => db.fighters.filter(f => f.user_id === id)
+  bots.forEach((bot, i) => bots.filter(them => them !== bot && inReach(line(bot), line(them))).slice(0, 2)
+    .forEach((them, n) => SQUAD_RPC.squad_battle(db, bot, { p_opponent: them, p_ranked: true }, i * 10 + n, '2000-01-03')))
   return db
 }
 
-function seedSocial(db, r) {
+function seedSocial(db) {
   for (const [name, tag, members] of GUILDS) {
     const [leader, ...rest] = members.map(i => `bot-${i}`)
     const id = RPC.create_guild(db, leader, { p_name: name, p_tag: tag })
@@ -79,10 +86,6 @@ function seedSocial(db, r) {
     for (const who of crew) RPC.join_party(db, who, { p_party: party })
   }
   db.nakama.push({ user_id: ME, nakama_id: 'bot-1' }, { user_id: ME, nakama_id: 'bot-7' })
-  // some older fights between the bots, so records aren't all zero
-  for (let i = 0; i < BOTS.length; i++) for (const step of [1, 4]) {
-    RPC.duel(db, `bot-${i}`, { p_opponent: `bot-${(i + step) % BOTS.length}`, p_ranked: true }, r, '2000-01-03')
-  }
 }
 
 function insertRow(db, table, row) {
@@ -119,10 +122,7 @@ export function battleNight(db, r = rng(Date.now())) {
       insertRow(db, 'fantasy_points', { user_id: party.user_id, gameweek_id: gw.gameweek_id, character_id: s.character_id, slot_type: s.slot_type, base_points: base, medic_boost_applied: boosted, final_points: final })
     }
     const rank = db.user_ranks.find(x => x.user_id === party.user_id)
-    rank.season_points += total
-    rank.all_time_points += total
-    rank.current_rank = RANKS.find(([floor]) => rank.season_points >= floor)[1]
-    rank.is_legend = rank.is_legend || rank.current_rank === 'Legendary'
+    addPoints(rank, total)
   }
   return gw
 }

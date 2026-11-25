@@ -1,4 +1,4 @@
--- Countries, guilds, guild parties, nakama and one-on-one fights. Run once after 004_avatar.sql. Safe to run again.
+-- Countries, guilds, guild parties, nakama and battle records. Run once after 004_avatar.sql. Safe to run again.
 -- Naming: the tables "parties" and "party_slots" hold a player's LINEUP of characters (the game's old name for it).
 -- A party in the game is now a group of guild mates: guild_parties.
 -- The numbers here (sizes, type advantage, luck) mirror webapp/lib/game.js and webapp/lib/demo.js.
@@ -62,18 +62,15 @@ CREATE TABLE IF NOT EXISTS nakama (
     CHECK (user_id <> nakama_id)
 );
 
--- 5. Ranked fights (spars are never stored). Only the challenger's record changes, once per opponent per week.
+-- 5. Squad battles that count (spars are never stored). Only the challenger's record changes.
+-- Players only read this table: the server that decides squad battles will write it.
 CREATE TABLE IF NOT EXISTS duels (
     id                  SERIAL PRIMARY KEY,
     challenger_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     opponent_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    challenger_score    INT NOT NULL,
-    opponent_score      INT NOT NULL,
-    winner_id           UUID,                       -- null = draw
-    rounds              JSONB NOT NULL,
+    winner_id           UUID NOT NULL,
     week                DATE NOT NULL,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (challenger_id, opponent_id, week)
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Row security. Guild data is readable by signed-in players; it changes only through the functions below.
@@ -206,88 +203,13 @@ BEGIN
   DELETE FROM public.guild_party_members WHERE party_id = p_party AND user_id = auth.uid();
 END $$;
 
--- One on one: lineup against lineup, slot by slot, using the battle night fight rules.
--- A slot is worth its battle night points; an empty slot loses to a filled one.
-CREATE OR REPLACE FUNCTION public.duel(p_opponent UUID, p_ranked BOOLEAN) RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
-DECLARE
-  me UUID := auth.uid();
-  type_order TEXT[] := ARRAY['Physical', 'Tactical', 'Cursed', 'Spiritual', 'Elemental', 'Mythic'];
-  r RECORD;
-  pa FLOAT8; pb FLOAT8;
-  worth INT; side TEXT;
-  mine INT := 0; theirs INT := 0;
-  rounds JSONB := '[]'::JSONB;
-  winner UUID;
-  who UUID;
-  filled INT; cost BIGINT;
-BEGIN
-  IF me IS NULL THEN RAISE EXCEPTION 'Sign in first'; END IF;
-  IF p_opponent = me THEN RAISE EXCEPTION 'You can''t fight yourself'; END IF;
-  IF p_ranked IS NULL OR NOT EXISTS (SELECT 1 FROM public.users WHERE id = p_opponent) THEN RAISE EXCEPTION 'No such player'; END IF;
-
-  FOREACH who IN ARRAY ARRAY[me, p_opponent] LOOP
-    SELECT count(*), COALESCE(sum(c.gold_cost), 0) INTO filled, cost
-      FROM public.parties p
-      JOIN public.party_slots s ON s.party_id = p.id
-      JOIN public.characters c ON c.character_id = s.character_id
-     WHERE p.user_id = who;
-    IF filled = 0 THEN RAISE EXCEPTION '%', CASE WHEN who = me THEN 'Build your lineup first' ELSE 'They have no lineup yet' END; END IF;
-    IF cost > 100000000 THEN RAISE EXCEPTION '%', CASE WHEN who = me THEN 'Your lineup is over budget' ELSE 'Their lineup is over budget' END; END IF;
-  END LOOP;
-
-  FOR r IN
-    WITH a AS (
-      SELECT s.slot_type, s.slot_position, c.character_id, c.overall, c.power_type
-        FROM public.parties p JOIN public.party_slots s ON s.party_id = p.id
-        JOIN public.characters c ON c.character_id = s.character_id WHERE p.user_id = me
-    ), b AS (
-      SELECT s.slot_type, s.slot_position, c.character_id, c.overall, c.power_type
-        FROM public.parties p JOIN public.party_slots s ON s.party_id = p.id
-        JOIN public.characters c ON c.character_id = s.character_id WHERE p.user_id = p_opponent
-    )
-    SELECT slot_type, slot_position,
-           a.character_id AS a_id, a.overall AS a_overall, a.power_type AS a_type,
-           b.character_id AS b_id, b.overall AS b_overall, b.power_type AS b_type
-      FROM a FULL JOIN b USING (slot_type, slot_position)
-     ORDER BY array_position(ARRAY['Champion', 'Specialist', 'Support', 'Medic', 'Sub'], slot_type), slot_position
-  LOOP
-    worth := CASE r.slot_type WHEN 'Champion' THEN 5 WHEN 'Specialist' THEN 4 WHEN 'Support' THEN 3 WHEN 'Medic' THEN 3 ELSE 1 END;
-    IF r.b_id IS NULL THEN side := 'a';
-    ELSIF r.a_id IS NULL THEN side := 'b';
-    ELSE
-      -- overall, +6 for a type edge, plus a normally distributed swing of spread 8
-      pa := COALESCE(r.a_overall, 50) + CASE WHEN type_order[array_position(type_order, r.a_type) % 6 + 1] = r.b_type THEN 6 ELSE 0 END
-            + sqrt(-2 * ln(1 - random())) * cos(2 * pi() * random()) * 8;
-      pb := COALESCE(r.b_overall, 50) + CASE WHEN type_order[array_position(type_order, r.b_type) % 6 + 1] = r.a_type THEN 6 ELSE 0 END
-            + sqrt(-2 * ln(1 - random())) * cos(2 * pi() * random()) * 8;
-      side := CASE WHEN abs(pa - pb) < 1.5 THEN 'draw' WHEN pa > pb THEN 'a' ELSE 'b' END;
-    END IF;
-    mine   := mine   + CASE side WHEN 'a' THEN worth WHEN 'draw' THEN 1 ELSE 0 END;
-    theirs := theirs + CASE side WHEN 'b' THEN worth WHEN 'draw' THEN 1 ELSE 0 END;
-    rounds := rounds || jsonb_build_object('slot', r.slot_type, 'position', r.slot_position, 'a', r.a_id, 'b', r.b_id, 'winner', side);
-  END LOOP;
-
-  winner := CASE WHEN mine > theirs THEN me WHEN theirs > mine THEN p_opponent END;
-  IF p_ranked THEN
-    BEGIN
-      INSERT INTO public.duels (challenger_id, opponent_id, challenger_score, opponent_score, winner_id, rounds, week)
-      VALUES (me, p_opponent, mine, theirs, winner, rounds, date_trunc('week', now() AT TIME ZONE 'UTC')::DATE);
-    EXCEPTION WHEN unique_violation THEN
-      -- raising here also throws away the result, so a ranked fight can't be re-rolled
-      RAISE EXCEPTION 'You already fought them this week. Spar instead.';
-    END;
-  END IF;
-  RETURN jsonb_build_object('ranked', p_ranked, 'challenger_score', mine, 'opponent_score', theirs, 'winner_id', winner, 'rounds', rounds);
-END $$;
-
 REVOKE EXECUTE ON FUNCTION
   public.create_guild(TEXT, TEXT), public.join_guild(INT), public.leave_guild(), public.create_party(TEXT, TEXT),
-  public.join_party(INT), public.leave_party(INT), public.duel(UUID, BOOLEAN), public.after_guild_leave(), public.after_party_leave()
+  public.join_party(INT), public.leave_party(INT), public.after_guild_leave(), public.after_party_leave()
   FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION
   public.create_guild(TEXT, TEXT), public.join_guild(INT), public.leave_guild(), public.create_party(TEXT, TEXT),
-  public.join_party(INT), public.leave_party(INT), public.duel(UUID, BOOLEAN)
+  public.join_party(INT), public.leave_party(INT)
   TO authenticated;
 
 -- Leaderboards: names and scores only. New columns can only be appended to an existing view.
@@ -295,7 +217,7 @@ CREATE OR REPLACE VIEW leaderboard AS
 SELECT u.username, r.current_rank, r.season_points, r.all_time_points, r.is_legend, u.avatar_character_id,
        u.id AS user_id, u.country_code,
        g.id AS guild_id, g.name AS guild_name, g.tag AS guild_tag, m.role AS guild_role,
-       COALESCE(d.wins, 0)::INT AS duel_wins, COALESCE(d.losses, 0)::INT AS duel_losses, COALESCE(d.draws, 0)::INT AS duel_draws,
+       COALESCE(d.wins, 0)::INT AS duel_wins, COALESCE(d.losses, 0)::INT AS duel_losses,
        COALESCE(w.points, 0) AS week_points
 FROM user_ranks r
 JOIN users u ON u.id = r.user_id
@@ -304,8 +226,7 @@ LEFT JOIN guilds g ON g.id = m.guild_id
 LEFT JOIN (
     SELECT challenger_id,
            count(*) FILTER (WHERE winner_id = challenger_id) AS wins,
-           count(*) FILTER (WHERE winner_id = opponent_id)   AS losses,
-           count(*) FILTER (WHERE winner_id IS NULL)         AS draws
+           count(*) FILTER (WHERE winner_id = opponent_id)   AS losses
     FROM duels GROUP BY challenger_id
 ) d ON d.challenger_id = u.id
 LEFT JOIN (

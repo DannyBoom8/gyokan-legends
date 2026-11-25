@@ -1,6 +1,6 @@
-// Demo mode's copy of the guild, party and fight rules. The real ones are the functions in sql/005_guilds.sql:
+// Demo mode's copy of the guild and party rules (fights between squads are in squad-rules.js). The real ones are the functions in sql/005_guilds.sql:
 // same names, same arguments, same messages. Check this file with: node lib/guild-rules.test.mjs
-import { BEATS, BUDGET, SLOT_DEFS, DRAW_POINTS, GUILD_MAX, PARTY_MAX } from './game.js'
+import { BEATS, GUILD_MAX, PARTY_MAX } from './game.js'
 
 const fail = (message) => { throw new Error(message) }
 
@@ -10,10 +10,7 @@ export function fight(a, b, r) {
   return Math.abs(pa - pb) < 1.5 ? null : pa > pb ? a.character_id : b.character_id
 }
 
-const random = () => Math.random()
-random.gauss = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random())
-
-// ranked fights are limited per week, Monday to Sunday (UTC)
+// wars, cups and extra battles are counted per week, Monday to Sunday (UTC)
 export const weekOf = (now = new Date()) => {
   const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
   d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7))
@@ -22,13 +19,6 @@ export const weekOf = (now = new Date()) => {
 
 const nextId = (db, table) => (db.seq[table] = (db.seq[table] || 0) + 1)
 const membership = (db, userId) => db.guild_members.find(m => m.user_id === userId)
-
-function lineup(db, userId) {
-  const party = db.parties.find(p => p.user_id === userId)
-  return db.party_slots.filter(s => s.party_id === party?.id)
-    .map(s => ({ ...s, character: db.characters.find(c => c.character_id === s.character_id) }))
-    .filter(s => s.character)
-}
 
 function leaveParty(db, partyId, userId) {
   db.guild_party_members = db.guild_party_members.filter(m => !(m.party_id === partyId && m.user_id === userId))
@@ -83,37 +73,6 @@ export const RPC = {
     db.guild_party_members.push({ party_id: p_party, user_id: me, occasion: party.occasion })
   },
   leave_party(db, me, { p_party }) { leaveParty(db, p_party, me) },
-
-  // lineup against lineup, slot by slot; a spar (p_ranked false) is never stored
-  duel(db, me, { p_opponent, p_ranked }, r = random, week = weekOf()) {
-    if (p_opponent === me) fail("You can't fight yourself")
-    if (!db.users.some(u => u.id === p_opponent)) fail('No such player')
-    const [a, b] = [me, p_opponent].map(id => {
-      const slots = lineup(db, id)
-      if (!slots.length) fail(id === me ? 'Build your lineup first' : 'They have no lineup yet')
-      if (slots.reduce((n, s) => n + s.character.gold_cost, 0) > BUDGET) fail(id === me ? 'Your lineup is over budget' : 'Their lineup is over budget')
-      return slots
-    })
-    let mine = 0, theirs = 0
-    const rounds = []
-    for (const def of SLOT_DEFS) for (let position = 1; position <= def.count; position++) {
-      const find = (list) => list.find(s => s.slot_type === def.type && s.slot_position === position)?.character
-      const x = find(a), y = find(b)
-      if (!x && !y) continue
-      const win = !y ? x.character_id : !x ? y.character_id : fight(x, y, r)
-      const winner = win == null ? 'draw' : x && win === x.character_id ? 'a' : 'b'
-      mine += winner === 'a' ? def.points : winner === 'draw' ? DRAW_POINTS : 0
-      theirs += winner === 'b' ? def.points : winner === 'draw' ? DRAW_POINTS : 0
-      rounds.push({ slot: def.type, position, a: x?.character_id ?? null, b: y?.character_id ?? null, winner })
-    }
-    const winner_id = mine > theirs ? me : theirs > mine ? p_opponent : null
-    const result = { ranked: !!p_ranked, challenger_score: mine, opponent_score: theirs, winner_id, rounds }
-    if (p_ranked) {
-      if (db.duels.some(d => d.challenger_id === me && d.opponent_id === p_opponent && d.week === week)) fail('You already fought them this week. Spar instead.')
-      db.duels.push({ ...result, id: nextId(db, 'duels'), challenger_id: me, opponent_id: p_opponent, week, created_at: new Date().toISOString() })
-    }
-    return result
-  },
 }
 
 // the two views the database exposes, built from the demo tables
@@ -129,7 +88,6 @@ export function leaderboardRows(db) {
       user_id: r.user_id, country_code: u?.country_code, guild_id: g?.id ?? null, guild_name: g?.name ?? null, guild_tag: g?.tag ?? null, guild_role: m?.role ?? null,
       duel_wins: fought.filter(d => d.winner_id === r.user_id).length,
       duel_losses: fought.filter(d => d.winner_id === d.opponent_id).length,
-      duel_draws: fought.filter(d => d.winner_id == null).length,
       cup_wins: (db.cups || []).filter(c => c.champion.members?.includes(r.user_id)).length,
       week_points: db.fantasy_points.filter(p => p.user_id === r.user_id && p.gameweek_id === week).reduce((n, p) => n + p.final_points, 0),
     }

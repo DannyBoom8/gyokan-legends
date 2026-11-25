@@ -20,7 +20,8 @@ TYPE_CYCLE = ["Physical", "Tactical", "Cursed", "Spiritual", "Elemental", "Mythi
 BEATS = {t: TYPE_CYCLE[(i + 1) % len(TYPE_CYCLE)] for i, t in enumerate(TYPE_CYCLE)}
 
 # season points needed for each rank, highest first
-RANKS = [(500, "Legendary"), (350, "Sovereign"), (220, "Warlord"), (110, "Veteran"), (40, "Ronin"), (0, "Rookie")]
+RANKS = [(5500, "Legendary"), (3800, "Immortal"), (2700, "Sovereign"), (1900, "Conqueror"), (1300, "Warlord"),
+         (850, "Vanguard"), (500, "Veteran"), (250, "Adept"), (100, "Ronin"), (0, "Rookie")]
 
 
 BUDGET = 100_000_000

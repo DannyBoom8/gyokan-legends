@@ -43,7 +43,7 @@ export default function Nakama() {
     return () => { current = false; clearTimeout(wait) }
   }, [search])
 
-  if (loading) return <PageSkeleton variant="list" />
+  if (loading) return <PageSkeleton nav="nakama" title="Nakama" width="max-w-3xl" />
 
   const searching = search.trim().length >= 2
 

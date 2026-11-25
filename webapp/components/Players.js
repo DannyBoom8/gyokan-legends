@@ -1,11 +1,14 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { COUNTRIES, formatPoints, rankInfo } from '../lib/game'
-import { record } from '../lib/social'
+import { record, squadFight } from '../lib/social'
+import { DAILY_FIGHTS } from '../lib/squad'
 import { avatarFor } from '../lib/avatar'
 import Icon from './Icon'
 import { Panel } from './Manga'
+import Arena from './Arena'
 
 export const Empty = ({ children }) => <p className="box muted text-sm px-5 py-10 text-center">{children}</p>
 
@@ -98,24 +101,14 @@ export function GuildList({ rows, mine, action }) {
   )
 }
 
-function Fighter({ c, won, lost, right }) {
-  return (
-    <div className={`flex items-center gap-2 min-w-0 ${right ? 'flex-row-reverse text-right' : ''}`}>
-      <span className={`block w-10 h-12 flex-shrink-0 overflow-hidden border-[3px] ${won ? 'border-[var(--spot)]' : 'border-[var(--line)]'}`}>
-        {c && <img src={c.image_url} alt="" className={`w-full h-full object-cover object-top ${lost ? 'brightness-50' : ''}`} />}
-      </span>
-      <span className={`text-xs font-semibold leading-tight line-clamp-2 ${lost ? 'muted' : ''}`}>{c ? c.name : 'Empty'}</span>
-    </div>
-  )
-}
-
-// one player's card: spar, ranked fight, nakama. Mount it with key={player.user_id}.
+// one player's card: spar, fight, nakama. Mount it with key={player.user_id}.
 export function PlayerSheet({ player, me, avatars, onClose, onChange }) {
   const ref = useRef(null)
   const [nakama, setNakama] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [bout, setBout] = useState(null)
+  const [battle, setBattle] = useState(null)
+  const router = useRouter()
   const self = player.user_id === me
 
   useEffect(() => {
@@ -136,19 +129,16 @@ export function PlayerSheet({ player, me, avatars, onClose, onChange }) {
   }
 
   const fight = async (ranked) => {
-    setBusy(true); setError(''); setBout(null)
-    const { data, error } = await supabase.rpc('duel', { p_opponent: player.user_id, p_ranked: ranked })
-    if (error) { setBusy(false); return setError(error.message) }
-    const ids = data.rounds.flatMap(r => [r.a, r.b]).filter(Boolean)
-    const { data: chars } = await supabase.from('characters').select('character_id, name, image_url').in('character_id', ids)
-    setBout({ ...data, chars: Object.fromEntries((chars || []).map(c => [c.character_id, c])) })
+    setBusy(true); setError('')
+    const { battle, error } = await squadFight(player, ranked)
     setBusy(false)
+    if (error) return setError(error)
+    setBattle(battle)
     if (ranked) onChange?.()
   }
 
-  const verdict = bout && (bout.winner_id == null ? 'Draw' : bout.winner_id === me ? 'Victory' : 'Defeat')
-
   return (
+    <>
     <dialog ref={ref} onClose={onClose} onClick={e => e.target === ref.current && onClose()} aria-label={player.username} className="picker">
       <div className="flex items-center gap-3 p-4 border-b-[3px] border-current">
         <Portrait player={player} avatars={avatars} className="w-16 h-20" />
@@ -162,32 +152,14 @@ export function PlayerSheet({ player, me, avatars, onClose, onChange }) {
       </div>
 
       <div className="overflow-y-auto">
-        {!bout && (
-          <dl className="grid grid-cols-3 divide-x-2 divide-current/25 p-4">
-            {[['Season', formatPoints(player.season_points)], ['All-time', formatPoints(player.all_time_points)], ['Ranked fights', record(player)]].map(([k, v]) => (
-              <div key={k} className="min-w-0 px-2 min-[360px]:px-3 first:pl-0">
-                <dt className="label muted !text-[0.625rem] !whitespace-normal">{k}</dt>
-                <dd className="poster text-lg sm:text-2xl whitespace-nowrap mt-1.5">{v}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-
-        {bout && (
-          <div role="status" className="p-4">
-            <p className="poster text-4xl text-center" style={verdict === 'Victory' ? { color: 'var(--spot-text)' } : undefined}>{verdict} · {bout.challenger_score}–{bout.opponent_score}</p>
-            <p className="label muted text-center mt-2 mb-3">{bout.ranked ? 'Ranked fight · added to your record' : 'Spar · nothing recorded'}</p>
-            <ul className="divide-y-2 divide-current/20">
-              {bout.rounds.map(r => (
-                <li key={`${r.slot}-${r.position}`} className="arrive grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-1.5">
-                  <Fighter c={bout.chars[r.a]} won={r.winner === 'a'} lost={r.winner === 'b'} />
-                  <span className="label muted !text-[0.5625rem] text-center w-16">{r.slot}<span className="sr-only">: {r.winner === 'draw' ? 'draw' : r.winner === 'a' ? 'you win' : 'they win'}</span></span>
-                  <Fighter c={bout.chars[r.b]} won={r.winner === 'b'} lost={r.winner === 'a'} right />
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <dl className="grid grid-cols-3 divide-x-2 divide-current/25 p-4">
+          {[['Season', formatPoints(player.season_points)], ['All-time', formatPoints(player.all_time_points)], ['Battle record', record(player)]].map(([k, v]) => (
+            <div key={k} className="min-w-0 px-2 min-[360px]:px-3 first:pl-0">
+              <dt className="label muted !text-[0.625rem] !whitespace-normal">{k}</dt>
+              <dd className="poster text-lg sm:text-2xl whitespace-nowrap mt-1.5">{v}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
       {!self && (
@@ -198,9 +170,11 @@ export function PlayerSheet({ player, me, avatars, onClose, onChange }) {
             <button onClick={() => fight(true)} disabled={busy} className="btn-spot text-lg py-3">Fight</button>
             <button onClick={toggleNakama} disabled={busy || nakama == null} aria-pressed={!!nakama} className="btn text-lg py-3">{nakama ? 'Nakama ✓' : '+ Nakama'}</button>
           </div>
-          <p className="muted text-xs mt-2">Spar is practice. Fight is ranked: once a week against each player.</p>
+          <p className="muted text-xs mt-2">Your squads fight. Spar is practice with squads evened and no traits. Fight is ranked, {DAILY_FIGHTS} a day: it goes on your record and a win can earn an upgrade point and season points.</p>
         </div>
       )}
     </dialog>
+    {battle && <Arena {...battle} onClose={() => setBattle(null)} onSpend={() => router.push('/squad')} />}
+    </>
   )
 }

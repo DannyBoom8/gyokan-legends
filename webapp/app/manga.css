@@ -199,6 +199,17 @@
 .mg .login-card .btn-spot { padding-block: clamp(10px, 1.9dvh, 16px); }
 .mg .login-card .field { padding-block: clamp(7px, 1.4dvh, 12px); }
 
+/* card ranks, E up to S: the letter tag and the card border share one colour */
+[data-rank="E"] { --rank: #8b5a2b; --rank-ink: #fff; }
+[data-rank="D"] { --rank: #646b78; --rank-ink: #fff; }
+[data-rank="C"] { --rank: #24774a; --rank-ink: #fff; }
+[data-rank="B"] { --rank: #2563eb; --rank-ink: #fff; }
+[data-rank="A"] { --rank: #7c3aed; --rank-ink: #fff; }
+[data-rank="S"] { --rank: #d4a017; --rank-ink: #241800; }
+.rank-tag { display: inline-block; background: var(--rank); color: var(--rank-ink); line-height: 1; padding: 3px 7px; }
+/* three-part selector so the rank colour wins over .box borders and hover borders */
+.mg .rank-frame[data-rank], .picker .rank-frame[data-rank] { border: 3px solid var(--rank); }
+
 /* avatar picker */
 .picker {
   margin: auto; width: min(720px, calc(100vw - 24px)); max-height: 85dvh; padding: 0;
@@ -212,6 +223,34 @@
 .picker .hit-pop { animation: hit-pop 280ms var(--ease-out) backwards; }
 @keyframes hit-pop { from { opacity: 0; scale: 0.7; } }
 @media (prefers-reduced-motion: reduce) { .picker .hit-pop { animation: none; } }
+
+/* ---------- loading screens: app opening, face-off before a fight, result after it ---------- */
+.mg .skeleton { background: color-mix(in oklab, var(--ink) 11%, var(--panel)); }
+.mg.splash { position: fixed; inset: 0; z-index: 100; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; background: var(--paper); }
+.mg.splash::before { display: none; }
+.mg.splash-out { animation: splash-out 300ms var(--ease-out) 1200ms forwards; }
+@keyframes splash-out { to { opacity: 0; visibility: hidden; } }
+.splash-name { width: min(18rem, 76vw); animation: rise 420ms var(--ease-out) backwards; }
+.load-bar { display: block; flex-shrink: 0; width: min(14rem, 60%); height: 10px; border: 2px solid var(--line); background: var(--panel); overflow: hidden; }
+.load-bar > span { display: block; height: 100%; background: var(--spot); transform-origin: left; animation: load-fill var(--fill-ms, 1100ms) cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+@keyframes load-fill { from { transform: scaleX(0); } }
+.picker :is(.fight-intro, .fight-result) { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(6px, 1.5dvh, 12px); min-height: min(28rem, 55dvh); padding: clamp(8px, 2dvh, 16px) 12px; text-align: center; }
+/* the replay needs more of a short screen than other dialogs do */
+.picker.arena { max-height: 94dvh; }
+.picker .intro-a { animation: from-left 420ms var(--ease-out) backwards; }
+.picker .intro-b { animation: from-right 420ms var(--ease-out) 140ms backwards; }
+.picker .intro-vs { animation: slam 420ms var(--ease-out) 520ms backwards; }
+.picker .result-word { animation: slam 480ms var(--ease-out) backwards; }
+.picker .result-card { animation: rise 360ms var(--ease-out) backwards; animation-delay: calc(240ms + var(--i, 0) * 80ms); }
+@keyframes slam { from { opacity: 0; scale: 2; rotate: -12deg; } }
+@keyframes rise { from { opacity: 0; translate: 0 18px; } }
+@keyframes from-left { from { opacity: 0; translate: -60% 0; } }
+@keyframes from-right { from { opacity: 0; translate: 60% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .splash-name, .picker :is(.intro-a, .intro-b, .intro-vs, .result-word, .result-card) { animation-name: appear; animation-delay: 0ms; }
+  .mg.splash-out { animation-delay: 500ms; }
+  .load-bar > span { animation: none; }
+}
 
 /* shared navigation: no outlines, only fills; the current page is a cut red block */
 .mn { color: var(--ink); }
@@ -240,3 +279,6 @@
   .mg :is(.hov-card, .hov-row, .btn, .btn-spot):hover, .mg .hov-thumb:hover > span:first-child,
   .mg .hov-tile:hover > span, .mn-item:hover .mn-text { translate: none !important; }
 }
+
+/* short phones drop the wordmark, which puts the demo badge on top of a compact header's buttons */
+@media (max-height: 700px) { :root:has(.head-compact) .demo-flag { display: none; } }

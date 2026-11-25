@@ -10,4 +10,13 @@ export async function fetchMe() {
 
 export const byPoints = () => supabase.from('leaderboard').select('*').order('season_points', { ascending: false })
 
-export const record = (p) => `${p.duel_wins || 0}W ${p.duel_losses || 0}L ${p.duel_draws || 0}D`
+export const record = (p) => `${p.duel_wins || 0}W ${p.duel_losses || 0}L`
+
+// one fight between squads, with the pictures its replay needs
+export async function squadFight(opponent, ranked) {
+  const { data: result, error } = await supabase.rpc('squad_battle', { p_opponent: opponent.user_id, p_ranked: ranked })
+  if (error) return { error: error.message }
+  const ids = [...result.a.fighters, ...result.b.fighters].map(f => f.character_id)
+  const { data: chars } = await supabase.from('characters').select('character_id, name, image_url, power_type').in('character_id', ids)
+  return { battle: { result, rival: opponent.username, chars: Object.fromEntries((chars || []).map(c => [c.character_id, c])) } }
+}

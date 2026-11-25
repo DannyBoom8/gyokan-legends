@@ -31,7 +31,7 @@ rows = {r[0]: r for r in score_party(slots, {1: "win", 2: "win", 4: "win"})}
 assert rows[1][4] == 7.5 and rows[1][3] and rows[2][4] == 6.0 and rows[4][4] == 3 and not rows[4][3]
 
 # ranks
-assert rank_for(0) == "Rookie" and rank_for(40) == "Ronin" and rank_for(499) == "Sovereign" and rank_for(999) == "Legendary"
+assert rank_for(0) == "Rookie" and rank_for(100) == "Ronin" and rank_for(499) == "Adept" and rank_for(5499) == "Immortal" and rank_for(9999) == "Legendary"
 
 # party rules: budget, slot limits, no duplicates
 costs = {1: 15_000_000, 2: 15_000_000, 3: 15_000_000, 4: 5_000_000}
